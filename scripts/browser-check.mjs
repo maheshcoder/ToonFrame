@@ -1,0 +1,212 @@
+import { chromium } from 'playwright-core';
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+
+const baseURL = process.env.PREVIEW_URL || 'http://127.0.0.1:5173';
+await mkdir('artifacts', { recursive: true });
+const browser = await chromium.launch({ ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : { channel: 'chrome' }), headless: true });
+const checks = [];
+const errors = [];
+const failedAssets = [];
+const external = [];
+const pass = (message) => { checks.push(message); console.log('PASS ' + message); };
+const visible = (page, text) => page.getByText(text, { exact: false }).first().waitFor({ state: 'visible' });
+async function noOverflow(page) {
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+}
+async function snapshot(page, name) {
+  await page.evaluate(async () => {
+    await Promise.all([...document.images].map((image) => image.decode().catch(() => {})));
+    const backgrounds = [...document.querySelectorAll('.sprite-frame image')].map((element) => element.getAttribute('href')).filter(Boolean);
+    await Promise.all(backgrounds.map((url) => new Promise((resolve) => { const img = new Image(); img.onload = img.onerror = resolve; img.src = url; })));
+  });
+  await page.waitForTimeout(400);
+  await noOverflow(page);
+  await page.screenshot({ path: 'artifacts/' + name + '.png', fullPage: true });
+}
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, permissions: ['clipboard-read', 'clipboard-write'] });
+  await context.addInitScript(() => {
+    window.__audioCalls = 0;
+    if ('speechSynthesis' in window) speechSynthesis.speak = () => { window.__audioCalls++; throw new Error('Speech must not be used'); };
+    const urls = { created: [], revoked: [] };
+    const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL);
+    URL.createObjectURL = (file) => { const url = create(file); urls.created.push(url); return url; };
+    URL.revokeObjectURL = (url) => { urls.revoked.push(url); revoke(url); };
+    window.__urls = urls;
+  });
+  const page = await context.newPage();
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => { if (response.status() >= 400) failedAssets.push(response.url()); });
+  page.on('request', (request) => { if (/^https?:/.test(request.url()) && new URL(request.url()).origin !== new URL(baseURL).origin) external.push(request.url()); });
+  await page.goto(baseURL + '/#/avatar');
+  await visible(page, 'Some things need');
+  assert.equal(await page.getByRole('textbox', { name: 'Your message', exact: true }).count(), 0);
+  await snapshot(page, 'characters-desktop');
+  await page.getByRole('button', { name: 'Choose Meera', exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: 'Choose Meera', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('button', { name: 'Choose Arjun', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.getByRole('button', { name: 'Choose Arjun', exact: true }).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('button', { name: 'Choose Meera', exact: true }).focus();
+  await page.keyboard.press('Space');
+  assert.notEqual(await page.getByRole('button', { name: 'Choose Meera', exact: true }).evaluate((el) => getComputedStyle(el).outlineStyle), 'none');
+  await page.getByRole('button', { name: 'A face for every feeling', exact: false }).click();
+  assert.equal(await page.locator('.expression-tile').count(), 48);
+  assert.equal(await page.locator('.expression-tile [data-expression=kiss]').evaluate((el) => [el.dataset.columns, el.dataset.rows].join('x')), '4x6');
+  assert.match(await page.locator('.expression-tile [data-expression=hopeful]').locator('image').getAttribute('href'), /female-extra-2/);
+  await snapshot(page, 'expressions-desktop');
+  await page.getByRole('button', { name: 'A face for every feeling', exact: false }).click();
+  await page.getByRole('button', { name: 'Next: write your message' }).click();
+  await visible(page, 'A little message.');
+  assert.ok(page.url().endsWith('#/script'));
+  assert.equal(await page.locator('.script-cast [data-avatar="female"]').count(), 1);
+  const script = page.getByRole('textbox', { name: 'Your message', exact: true });
+  const create = page.getByRole('button', { name: 'Animate my message' });
+  assert.equal(await create.isDisabled(), true);
+  await script.fill('x'.repeat(5001));
+  assert.equal(await create.isDisabled(), true);
+  await visible(page, '5,001 / 5,000 characters');
+  await page.getByRole('button', { name: 'Try a conversation' }).click();
+  await page.getByLabel('Me', { exact: true }).selectOption('male');
+  await page.getByLabel('Friend', { exact: true }).selectOption('female');
+  await snapshot(page, 'writing-desktop');
+  await create.click();
+  await visible(page, 'Your animation is ready');
+  assert.ok(page.url().endsWith('#/animation'));
+  assert.equal(await page.locator('.stage-person').count(), 2);
+  assert.equal(await page.locator('.stage-person [data-avatar="male"]').count(), 1);
+  assert.equal(await page.locator('.stage-person [data-avatar="female"]').count(), 1);
+  await snapshot(page, 'animation-desktop');
+  pass('Three distinct routes, built-in character selection, expression library, validation, and two-person casting');
+
+  await page.getByRole('button', { name: 'Play animation', exact: true }).click();
+  await page.waitForTimeout(350);
+  const range = page.getByRole('slider', { name: 'Animation progress' });
+  assert.ok(Number(await range.inputValue()) > 0);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const pausedAt = Number(await range.inputValue());
+  await page.waitForTimeout(300);
+  assert.equal(Number(await range.inputValue()), pausedAt);
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  await page.waitForTimeout(200);
+  assert.ok(Number(await range.inputValue()) > pausedAt);
+  await page.getByRole('button', { name: 'Stop animation' }).click();
+  assert.equal(Number(await range.inputValue()), 0);
+  await page.getByRole('button', { name: 'Next scene' }).click();
+  await visible(page, 'Scene 2 of');
+  await page.getByLabel('Expression for scene 2', { exact: true }).selectOption('angry');
+  assert.equal(await page.locator('.stage-person.active [data-expression="angry"]').count(), 1);
+  await page.getByRole('button', { name: 'Previous scene' }).click();
+  await page.getByLabel('Animation speed', { exact: true }).selectOption('1.5');
+  await range.fill(await range.getAttribute('max'));
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  await page.getByRole('button', { name: 'Replay', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  assert.ok(Number(await range.inputValue()) < 1000);
+  pass('Silent timeline play, exact pause/resume, stop, next/previous, seek, speed, replay, and expression overrides');
+
+  for (const [width, height, name] of [[768,1024,'animation-tablet'],[375,812,'animation-mobile'],[320,740,'animation-mobile-320']]) {
+    await page.setViewportSize({ width, height });
+    await snapshot(page, name);
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  assert.equal(await page.locator('.stage-person.active').evaluate((el) => getComputedStyle(el).animationName), 'none');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit message & cast' }).click();
+  await snapshot(page, 'writing-mobile-320');
+  await page.getByRole('button', { name: /^One character/ }).click();
+  await script.fill('I took a deep breath and looked around at all the little things that made today special, from the morning sunlight to the kind words of a friend who believed in me.');
+  await create.click();
+  const bubbleBounds = await page.locator('.story-bubble').boundingBox();
+  const spriteBounds = await page.locator('.stage-person.active .character-sprite').boundingBox();
+  assert.ok(bubbleBounds.y + bubbleBounds.height < spriteBounds.y, 'Long text must not cover the character at 320px');
+  await page.getByRole('button', { name: 'Edit message & cast' }).click();
+  await page.getByRole('button', { name: /^Auto-detect/ }).click();
+  await script.fill('A: Hello.\nB: Hi!\nC: Hey!');
+  await visible(page, 'supports two speakers');
+  assert.equal(await create.isDisabled(), true);
+  await page.getByRole('button', { name: 'Use just because example' }).click();
+  await create.click();
+  assert.equal(await page.locator('.stage-person').count(), 1);
+  await page.getByRole('button', { name: 'Edit message & cast' }).click();
+  await page.goBack();
+  await visible(page, 'Your animation is ready');
+  await page.getByRole('button', { name: 'Your character', exact: true }).click();
+  await snapshot(page, 'characters-mobile-320');
+  pass('Responsive phone/tablet layouts, reduced motion, solo conversion, invalid dialogue, and browser Back');
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.getByRole('button', { name: 'A character only you could be.', exact: false }).click();
+  await page.getByRole('button', { name: 'Copy prompt', exact: true }).click();
+  await visible(page, 'Prompt copied');
+  assert.match(await page.evaluate(() => navigator.clipboard.readText()), /6 equal columns × 8 equal rows/);
+  assert.equal(await page.locator('.format-map>div').count(), 48);
+  assert.equal(await page.getByRole('button', { name: '48 expressions', exact: false }).getAttribute('aria-pressed'), 'true');
+  await page.setViewportSize({ width: 320, height: 900 });
+  await snapshot(page, 'upload-48-mobile');
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  const upload = page.locator('#sheet-file');
+  await upload.setInputFiles({ name: 'wrong.gif', mimeType: 'image/gif', buffer: Buffer.from('GIF89a') });
+  await visible(page, 'Choose a PNG');
+  await upload.setInputFiles({ name: 'large.png', mimeType: 'image/png', buffer: Buffer.alloc(10 * 1024 * 1024 + 1) });
+  await visible(page, 'up to 10 MB');
+  await upload.setInputFiles({ name: 'corrupt.png', mimeType: 'image/png', buffer: Buffer.from('broken') });
+  await visible(page, 'could not be opened');
+  const makeSheet = async (width, height, mime = 'image/png', layout = '48') => {
+    const data = await page.evaluate(({ width, height, mime, layout }) => {
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0,0,width,height);
+      const columns = layout === '12' ? 3 : layout === '24' ? 4 : 6;
+      const rows = layout === '12' ? 4 : layout === '24' ? 6 : 8;
+      for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
+        const x = (col + .5) * width/columns, y = (row + .4) * height/rows;
+        ctx.fillStyle = ['#d7ad74','#a7ba91','#cc8a73','#c9bc89'][col % 4]; ctx.beginPath(); ctx.arc(x,y,width/(columns * 3.25),0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#41543b'; ctx.fillRect(x-width/(columns * 3.25),y+height/(rows * 3.7),width/(columns * 1.5),height/(rows * 2.7));
+      }
+      return canvas.toDataURL(mime).split(',')[1];
+    }, { width, height, mime, layout });
+    return Buffer.from(data, 'base64');
+  };
+  await upload.setInputFiles({ name: 'square.png', mimeType: 'image/png', buffer: await makeSheet(600,600) });
+  await visible(page, 'Use a 2:3 portrait sheet');
+  await upload.setInputFiles({ name: 'My character.png', mimeType: 'image/png', buffer: await makeSheet(800,1200) });
+  await page.getByRole('button', { name: 'Choose My character', exact: true }).waitFor();
+  await page.getByRole('button', { name: '12 expressions', exact: false }).click();
+  await upload.setInputFiles({ name: 'Second character.webp', mimeType: 'image/webp', buffer: await makeSheet(600,900,'image/webp','12') });
+  await page.getByRole('button', { name: 'Choose Second character', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Next: write your message' }).click();
+  await page.getByRole('button', { name: 'Try a conversation' }).click();
+  await page.getByLabel('Me', { exact: true }).selectOption({ label: 'My character (uploaded)' });
+  await page.getByLabel('Friend', { exact: true }).selectOption({ label: 'Second character (uploaded)' });
+  await create.click();
+  assert.equal(await page.locator('.stage-person [data-avatar]').first().evaluate((el) => [el.dataset.columns, el.dataset.rows].join('x')), '6x8');
+  assert.equal(await page.locator('.stage-person .character-sprite').evaluateAll((els) => els.every((el) => el.querySelector('image').getAttribute('href').startsWith('blob:'))), true);
+  await page.getByRole('button', { name: 'Play animation', exact: true }).click();
+  await page.waitForTimeout(100);
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit message & cast' }).click();
+  await page.getByLabel('Friend', { exact: true }).selectOption('female');
+  await create.click();
+  assert.equal(await page.locator('.stage-person [data-avatar="female"]').count(), 1);
+  await page.getByRole('button', { name: 'Your character', exact: true }).click();
+  await page.getByRole('button', { name: 'Remove My character', exact: true }).click();
+  await page.getByRole('button', { name: 'Remove Second character', exact: true }).click();
+  assert.equal(await page.evaluate(() => window.__urls.created.length === window.__urls.revoked.length), true);
+  pass('Copyable AI prompt, upload format/type/size/decode validation, custom/custom and custom/default casting, and URL cleanup');
+
+  assert.equal(await page.evaluate(() => window.__audioCalls), 0);
+  assert.equal(await page.locator('audio,video').count(), 0);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(failedAssets, []);
+  assert.deepEqual(external, []);
+  await page.reload();
+  await visible(page, 'Some things need');
+  assert.equal(await page.getByRole('button', { name: 'Choose My character', exact: true }).count(), 0);
+  pass('No audio, no external network requests, no runtime or missing-asset errors; uploads reset on reload');
+  await writeFile('artifacts/browser-report.json', JSON.stringify({ checks, errors, failedAssets, external }, null, 2));
+} finally {
+  await browser.close();
+}
