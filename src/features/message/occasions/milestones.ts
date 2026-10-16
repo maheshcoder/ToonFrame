@@ -1,0 +1,135 @@
+import type { OccasionDefinition } from './definition.ts';
+export const MILESTONES_OCCASIONS = [
+  {
+    "id": "birthday",
+    "label": "Birthday",
+    "emoji": "🎂",
+    "heading": "It’s your day!",
+    "mood": "excited",
+    "group": "Milestones",
+    "lead": "Happy birthday!",
+    "reply": "Thank you! There’s definitely cake with your name on it.",
+    "example": "Happy birthday!\nHope your day is amazing!\nSave me the biggest slice of cake.",
+    "theme": "birthday"
+  },
+  {
+    "id": "celebration",
+    "label": "We did it!",
+    "emoji": "🎉",
+    "heading": "Look at us go!",
+    "mood": "celebrate",
+    "group": "Milestones",
+    "lead": "We did it!",
+    "reply": "We really did! I’m so proud of us too.",
+    "example": "We did it!\nI’m so proud of us.\nTime for a very embarrassing victory dance!",
+    "theme": "celebration"
+  },
+  {
+    "id": "anniversary",
+    "label": "Anniversary",
+    "emoji": "💞",
+    "heading": "Another year of us",
+    "mood": "love",
+    "group": "Milestones",
+    "lead": "Happy anniversary!",
+    "reply": "Another year, and you’re still my favourite.",
+    "example": "Happy anniversary!\nI love our little everyday moments.\nLet’s celebrate another year of us.",
+    "theme": "anniversary"
+  },
+  {
+    "id": "graduation",
+    "label": "Graduation",
+    "emoji": "🎓",
+    "heading": "Look how far you’ve come",
+    "mood": "proud",
+    "group": "Milestones",
+    "lead": "Congratulations on graduating!",
+    "reply": "We made it! Thank you for cheering me on.",
+    "example": "Congratulations on graduating!\nI’m so proud of you.\nTime to celebrate everything you worked for.",
+    "theme": "graduation"
+  },
+  {
+    "id": "exam-wishes",
+    "label": "Exam wishes",
+    "emoji": "🍀",
+    "heading": "You can do this",
+    "mood": "determined",
+    "group": "Milestones",
+    "lead": "Good luck with your exam!",
+    "reply": "Thank you. I’m nervous, but I’ll do my best.",
+    "example": "Good luck with your exam!\nTake a breath and stay calm.\nI’m proud of the effort you put in.",
+    "theme": "exam-wishes"
+  },
+  {
+    "id": "farewell",
+    "label": "Farewell",
+    "emoji": "👋",
+    "heading": "Until our next hello",
+    "mood": "sad",
+    "group": "Milestones",
+    "lead": "This goodbye is harder than I expected.",
+    "reply": "I’ll miss you too. This isn’t our last adventure.",
+    "example": "This goodbye is harder than I expected.\nI’ll miss you.\nI’m grateful for every memory we made.",
+    "theme": "farewell"
+  },
+  {
+    "id": "welcome",
+    "label": "Welcome back",
+    "emoji": "🏡",
+    "heading": "So glad you’re here",
+    "mood": "joyful",
+    "group": "Milestones",
+    "lead": "Welcome back!",
+    "reply": "I missed this. It’s good to be back.",
+    "example": "Welcome back!\nI’m so happy to see you.\nPrepare for a very big hug.",
+    "theme": "welcome"
+  },
+  {
+    "id": "reunion",
+    "label": "Reunion",
+    "emoji": "🫂",
+    "heading": "Finally, together again",
+    "mood": "excited",
+    "group": "Milestones",
+    "lead": "We’re finally together again!",
+    "reply": "It feels like no time has passed.",
+    "example": "We’re finally together again!\nI missed you so much.\nI can’t wait to hear all your stories.",
+    "theme": "reunion"
+  },
+  {
+    "id": "engagement",
+    "label": "Engagement",
+    "emoji": "💍",
+    "heading": "A lovely new chapter",
+    "mood": "love",
+    "group": "Milestones",
+    "lead": "Congratulations on your engagement!",
+    "reply": "Thank you! We’re still smiling about it.",
+    "example": "Congratulations on your engagement!\nSending you both so much love.\nLet’s celebrate this beautiful new chapter.",
+    "theme": "engagement"
+  },
+  {
+    "id": "wedding",
+    "label": "Wedding",
+    "emoji": "💒",
+    "heading": "To your happily ever after",
+    "mood": "heartfelt",
+    "group": "Milestones",
+    "lead": "Happy wedding day!",
+    "reply": "Thank you for being part of our day.",
+    "example": "Happy wedding day!\nMay your life together be full of love.\nI’m so excited to celebrate with you.",
+    "theme": "wedding"
+  },
+  {
+    "id": "new-baby",
+    "label": "New baby",
+    "emoji": "🍼",
+    "heading": "The tiniest big joy",
+    "mood": "joyful",
+    "group": "Milestones",
+    "lead": "Welcome to the world, little one!",
+    "reply": "Thank you! Our hearts are very full.",
+    "example": "Welcome to the world, little one!\nSending your family all my love.\nCongratulations on your wonderful new adventure.",
+    "theme": "new-baby"
+  }
+] as const satisfies readonly OccasionDefinition[];

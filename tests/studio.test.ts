@@ -55,12 +55,14 @@ test('solo mode can intentionally narrate dialogue; long text is divided without
   assert.equal(story.scenes.map((scene) => scene.text).join(' '), text);
   assert.throws(() => compileStory(Array(61).fill('Hi.').join('\n')), /60 scenes/);
 });
-test('every built-in character has a distinct valid frame for all 48 moods', () => {
-  assert.equal(MOODS.length, 48);
+test('every catalog mood resolves to a valid built-in frame while classic artwork stays distinct', () => {
+  assert.equal(new Set(MOODS.map((mood) => mood.id)).size, MOODS.length);
+  assert.ok(MOODS.length >= UPLOAD_ORDER['48'].length);
   for (const avatar of BUILTINS) {
     const frames = MOODS.map((mood) => avatarFrame(avatar, mood.id));
     assert.ok(frames.every((item) => item.frame >= 0 && item.frame < item.columns * item.rows));
-    assert.equal(new Set(frames.map((item) => item.url + ':' + item.frame)).size, 48);
+    const originalFrames = UPLOAD_ORDER['48'].map((mood) => avatarFrame(avatar, mood));
+    assert.equal(new Set(originalFrames.map((item) => item.url + ':' + item.frame)).size, UPLOAD_ORDER['48'].length);
   }
 });
 test('upload prompts and renderers use the same exact 12/24/48-expression order', () => {
@@ -90,7 +92,7 @@ function resourceHarness() {
   const revoked: string[] = [];
   const pending = new Map<string, { resolve: (dimensions: {width:number;height:number}) => void; reject: (error: Error) => void }>();
   const resources = new SheetResources(() => 'blob:' + ++count, (url) => revoked.push(url),
-    (url) => new Promise((resolve, reject) => pending.set(url, { resolve, reject })));
+    (url) => new Promise((resolve, reject) => pending.set(url, { resolve, reject })), async (url) => [url]);
   const file = new File(['image'], 'sheet.png', { type: 'image/png' });
   const done = (url: string) => pending.get(url)!.resolve({ width: 1024, height: 1536 });
   return { resources, revoked, pending, file, done };

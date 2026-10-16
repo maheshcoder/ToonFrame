@@ -17,14 +17,14 @@ Keep the warm, soft-green visual language and the reference-inspired cartoon mal
 ## Implemented
 
 ### 1. Choose a character
-- Male Arjun and female Meera, each with 48 distinct expressions.
+- Male Arjun and female Meera, each with 48 generic expressions and a separate 12-pose birthday art pack.
 - Mood sampler and full expression gallery.
 - Copyable AI prompt and downloadable style references for a custom character.
 - Precise 12/24/48-expression sheet layouts and pose order; 48 is the default, with a 6 × 8 grid and 1536 × 2304 target.
-- Local PNG/JPEG/WebP uploads up to 10 MB, dimension/decoding checks, four-character library, and URL cleanup.
+- Local PNG/JPEG/WebP uploads up to 10 MB, strict ratio/resolution/decoding, blank-cell and copied-pose checks, four-character library, and URL cleanup.
 
 ### 2. Make the message personal
-- 32 occasion presets with examples for every selected feeling in one- and two-character modes.
+- All 32 occasion presets in a swipeable horizontal row, with trackpad scrolling, arrow buttons, and keyboard navigation. Each has examples for every selected feeling in one- and two-character modes.
 - Visible face previews for happy, loving, shy, surprised, mock angry, sad, excited, and playful.
 - Plain-text messages and examples, automatic expression/emoji generation from words, a chosen main feeling, and live matched-feeling chips. No emoji or tags need to be typed.
 - Actual selected characters above the text box.
@@ -34,9 +34,9 @@ Keep the warm, soft-green visual language and the reference-inspired cartoon mal
 - Local rules for love, apology, reconciliation, invitations, cake jokes, and playful reversals.
 
 ### 3. Preview and send
-- Expressions, movement, readable text bubbles, and emoji. Shared contained framing prevents oversized poses from being cut off; caption measurements reserve enough stage space.
-- Occasion-specific soft background themes.
-- Play/pause/resume/stop/replay, seek, speed, scene navigation, and manual expression changes.
+- Expressions, movement, readable text bubbles, and emoji. Measured source rectangles handle uneven sprite spacing, and shared contained framing keeps complete poses visible; caption measurements reserve enough stage space.
+- 32 occasion-specific layered backgrounds: floating confetti/hearts/petals, party light beams, sunshine, stars, lanterns, snow, and Holi color. Interactive character/greeting cards support taps, keyboard effects, pointer depth, and finite play/pause demos. Ambient scenery follows the message timeline and is included in video; tap/pointer effects are preview-only. Reduced motion freezes all background animation.
+- Play/pause/resume/stop/replay, seek, speed, and scene navigation. Scene expressions use a searchable emoji-style keyboard with actual character thumbnails and feeling names, All/Personal/Classic/Occasions filters, all 32 occasion categories, and 60 unique choices per built-in. Categories without dedicated sheets show related existing character poses; Birthday has its own 12-pose pack. Uploaded keyboards list only their actual frames. The picker pauses playback, uses the correct male/female/uploaded speaker, supports keyboard/Escape/focus return, and becomes a bottom sheet on phones.
 - Reduced-motion behavior and background-tab pause.
 - Real browser-local video recording, including default and uploaded characters.
 - Portrait 720 × 900, up to 24 fps, silent, maximum 60 seconds.
@@ -44,6 +44,14 @@ Keep the warm, soft-green visual language and the reference-inspired cartoon mal
 - Creation progress, cancel, unsupported/error states, in-page video review, and download.
 - Native file sharing only on devices that report support, initiated by a user click.
 - Recording and output cleanup after edits, errors, cancellation, and navigation.
+
+- Birthday art is selected by sheet-level occasion metadata in both preview and export. Related mood aliases use matching birthday poses; missing sad/angry poses use the normal art. Custom-upload orders stay unchanged. Manual scene selection stores the exact sheet/frame, so a dedicated pose can be used with any theme and is preserved by video export. Changing the image invalidates old recordings even when the semantic mood is unchanged.
+
+## Content extension structure
+
+Implemented: separate classic/personal/custom expression packs, male/female atlas manifests, versioned upload formats, grouped occasion files, feeling-example profiles, and a theme registry. All 32 occasions now have individual pastel backgrounds and themed vector decorations, shared by preview and video. Optional local background images are supported. An atmosphere preset selects motion and effects per theme; shared deterministic frame coordinates keep SVG preview and canvas video aligned. Components and rendering do not need occasion-specific conditionals.
+
+Future additions belong in the custom registry files, with images under public/avatars/male, public/avatars/female, or public/themes. Existing IDs and upload orders remain stable. The content validator checks grids, missing assets, approved PNG proportions, minimum 256 px per nominal cell, maximum 24 MP, duplicate files/normalized poses, overlapping crops, fallback cycles, palette values, and occasion/theme links before dev/build. New occasion sheets are 3 × 4, maximum 12 poses; extra drawings require another sheet, never denser grids. See docs/ADDING_CONTENT.md for complete examples.
 
 ## Architecture and constraints
 
@@ -58,7 +66,7 @@ Image generation remains a separate action in the user's chosen tool. The app ac
 - Local English keyword rules cannot reliably understand sarcasm or every language. Emoji, tags, and manual scene controls are authoritative alternatives.
 - Two labelled speakers maximum.
 - The user-added 4 × 6 sheets provide 24 additional drawings per character, including dedicated playful and hopeful poses. 48-expression custom sheets map all poses directly. Older 12/24-frame sheets retain their original layouts and reuse the closest pose for additional moods.
-- 12/24-frame custom sheets reuse nearby poses for new moods; file validation cannot check actual pose content.
+- 12/24-frame custom sheets reuse nearby poses for new moods; pixel checks reject blank/copy cells but cannot verify identity, expression meaning, or correct order.
 - Frame animation and movement are not interpolated face tracking or lip-sync.
 - Recording is performed in real time in a visible tab. Older browsers may not support it.
 - MP4 codecs and file sharing vary by browser/device; WebM may not be accepted in all chat apps.

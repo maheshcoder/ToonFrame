@@ -1,3 +1,5 @@
+import { chooseExpression, makeTestSheet } from './ui-helpers.mjs';
+import { MOODS } from '../src/features/avatar/catalog/index.ts';
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -52,7 +54,7 @@ try {
   await page.keyboard.press('Space');
   assert.notEqual(await page.getByRole('button', { name: 'Choose Meera', exact: true }).evaluate((el) => getComputedStyle(el).outlineStyle), 'none');
   await page.getByRole('button', { name: 'A face for every feeling', exact: false }).click();
-  assert.equal(await page.locator('.expression-tile').count(), 48);
+  assert.equal(await page.locator('.expression-tile').count(), MOODS.length);
   assert.equal(await page.locator('.expression-tile [data-expression=kiss]').evaluate((el) => [el.dataset.columns, el.dataset.rows].join('x')), '4x6');
   assert.match(await page.locator('.expression-tile [data-expression=hopeful]').locator('image').getAttribute('href'), /female-extra-2/);
   await snapshot(page, 'expressions-desktop');
@@ -95,7 +97,7 @@ try {
   assert.equal(Number(await range.inputValue()), 0);
   await page.getByRole('button', { name: 'Next scene' }).click();
   await visible(page, 'Scene 2 of');
-  await page.getByLabel('Expression for scene 2', { exact: true }).selectOption('angry');
+  await chooseExpression(page, 2, 'angry');
   assert.equal(await page.locator('.stage-person.active [data-expression="angry"]').count(), 1);
   await page.getByRole('button', { name: 'Previous scene' }).click();
   await page.getByLabel('Animation speed', { exact: true }).selectOption('1.5');
@@ -155,27 +157,21 @@ try {
   await visible(page, 'up to 10 MB');
   await upload.setInputFiles({ name: 'corrupt.png', mimeType: 'image/png', buffer: Buffer.from('broken') });
   await visible(page, 'could not be opened');
-  const makeSheet = async (width, height, mime = 'image/png', layout = '48') => {
-    const data = await page.evaluate(({ width, height, mime, layout }) => {
-      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0,0,width,height);
-      const columns = layout === '12' ? 3 : layout === '24' ? 4 : 6;
-      const rows = layout === '12' ? 4 : layout === '24' ? 6 : 8;
-      for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
-        const x = (col + .5) * width/columns, y = (row + .4) * height/rows;
-        ctx.fillStyle = ['#d7ad74','#a7ba91','#cc8a73','#c9bc89'][col % 4]; ctx.beginPath(); ctx.arc(x,y,width/(columns * 3.25),0,Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#41543b'; ctx.fillRect(x-width/(columns * 3.25),y+height/(rows * 3.7),width/(columns * 1.5),height/(rows * 2.7));
-      }
-      return canvas.toDataURL(mime).split(',')[1];
-    }, { width, height, mime, layout });
-    return Buffer.from(data, 'base64');
-  };
+  const makeSheet = (...args) => makeTestSheet(page, ...args);
   await upload.setInputFiles({ name: 'square.png', mimeType: 'image/png', buffer: await makeSheet(600,600) });
   await visible(page, 'Use a 2:3 portrait sheet');
-  await upload.setInputFiles({ name: 'My character.png', mimeType: 'image/png', buffer: await makeSheet(800,1200) });
+  await upload.setInputFiles({ name: 'small.png', mimeType: 'image/png', buffer: await makeSheet(800,1200) });
+  await visible(page, 'at least 256');
+  await upload.setInputFiles({ name: 'repeats.png', mimeType: 'image/png', buffer: await makeSheet(1536,2304,'image/png','48','duplicate') });
+  await visible(page, 'repeat the same pose');
+  await upload.setInputFiles({ name: 'empty-cell.png', mimeType: 'image/png', buffer: await makeSheet(1536,2304,'image/png','48','blank') });
+  await visible(page, 'looks empty');
+  await upload.setInputFiles({ name: 'My character.png', mimeType: 'image/png', buffer: await makeSheet(1536,2304) });
   await page.getByRole('button', { name: 'Choose My character', exact: true }).waitFor();
+  await upload.setInputFiles({ name: 'Same character again.png', mimeType: 'image/png', buffer: await makeSheet(1536,2304) });
+  await visible(page, 'already uploaded');
   await page.getByRole('button', { name: '12 expressions', exact: false }).click();
-  await upload.setInputFiles({ name: 'Second character.webp', mimeType: 'image/webp', buffer: await makeSheet(600,900,'image/webp','12') });
+  await upload.setInputFiles({ name: 'Second character.webp', mimeType: 'image/webp', buffer: await makeSheet(1024,1536,'image/webp','12') });
   await page.getByRole('button', { name: 'Choose Second character', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Next: write your message' }).click();
   await page.getByRole('button', { name: 'Try a conversation' }).click();

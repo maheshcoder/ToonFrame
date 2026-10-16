@@ -1,3 +1,4 @@
+import { chooseExpression, makeTestSheet } from './ui-helpers.mjs';
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -45,8 +46,8 @@ try {
   }
   await input.fill('I have a birthday present for you!\nFriends again?');
   await page.getByRole('button', { name: 'Animate my message' }).click();
-  assert.equal(await page.getByLabel('Expression for scene 1', { exact: true }).inputValue(), 'gift');
-  assert.equal(await page.getByLabel('Expression for scene 2', { exact: true }).inputValue(), 'hopeful');
+  assert.equal(await page.getByRole('button', { name: 'Expression for scene 1', exact: true }).getAttribute('data-mood'), 'gift');
+  assert.equal(await page.getByRole('button', { name: 'Expression for scene 2', exact: true }).getAttribute('data-mood'), 'hopeful');
   await page.getByLabel('Animation speed').selectOption('1.5');
   pass('Occasions preserve text, emotion selection previews a real face, templates and personal mood arcs work at 320/768/1440px');
   await page.getByRole('button', { name: /^Create (MP4|WebM) video$/ }).click();
@@ -72,7 +73,7 @@ try {
   await video.screenshot({ path: 'artifacts/message-video-frame.png' });
   await page.screenshot({ path: 'artifacts/message-video-mobile.png', fullPage: true });
   assert.ok(await page.evaluate(() => window.__liveTracks.every((track) => track.readyState === 'ended' && track.kind === 'video')));
-  await page.getByLabel('Expression for scene 1', { exact: true }).selectOption('shy');
+  await chooseExpression(page, 1, 'shy');
   assert.equal(await video.count(), 0);
   await page.waitForFunction(() => window.__urls.size === 0, null, { timeout: 3000 }).catch(async (error) => { console.log(await page.evaluate(() => window.__urlEvents)); throw error; });
   pass('Real video encodes and decodes at 720×900 with no audio; cancel/retry, download, sharing handoff, and stale-file cleanup work');
@@ -89,23 +90,18 @@ try {
   await page.getByRole('button', { name: 'Your character', exact: true }).click();
   await page.getByRole('button', { name: 'A character only you could be.', exact: false }).click();
   await page.getByRole('button', { name: '48 expressions', exact: false }).click();
-  const sheet48 = await page.evaluate(() => {
-    const canvas = document.createElement('canvas'); canvas.width = 912; canvas.height = 1368;
-    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 912, 1368);
-    for (let row = 0; row < 8; row++) for (let col = 0; col < 6; col++) {
-      const x = (col + .5) * 152, y = (row + .38) * 171;
-      ctx.fillStyle = ['#dea879', '#9bb888', '#cc977d'][col % 3]; ctx.beginPath(); ctx.arc(x,y,43,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#324939'; ctx.fillRect(x-40,y+48,80,50);
-    }
-    return canvas.toDataURL('image/png').split(',')[1];
-  });
-  await page.locator('#sheet-file').setInputFiles({ name: 'Full-expression avatar.png', mimeType: 'image/png', buffer: Buffer.from(sheet48, 'base64') });
+  const sheet48 = await makeTestSheet(page,1536,2304);
+  await page.locator('#sheet-file').setInputFiles({ name: 'Full-expression avatar.png', mimeType: 'image/png', buffer: sheet48 });
   await page.getByRole('button', { name: 'Choose Full-expression avatar', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Next: write your message' }).click();
   await page.getByRole('button', { name: /^Two characters/ }).click();
   await input.fill('Me: Sending kisses!\nFriend: Just kidding!');
   await page.getByLabel('Friend', { exact: true }).selectOption('female');
   await page.getByRole('button', { name: 'Animate my message' }).click();
+  await page.getByRole('button', { name: 'Expression for scene 1', exact: true }).click();
+  const uploadedPicker = page.getByRole('dialog');
+  assert.ok(await uploadedPicker.locator('.expression-option .character-sprite').evaluateAll((sprites) => sprites.length === 48 && sprites.every((sprite) => !['male','female'].includes(sprite.dataset.avatar))));
+  await page.keyboard.press('Escape');
   await page.getByLabel('Animation speed').selectOption('1.5');
   await page.getByRole('button', { name: /^Create (MP4|WebM) video$/ }).click();
   await video.waitFor({ timeout: 25000 });

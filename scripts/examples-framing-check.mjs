@@ -1,3 +1,6 @@
+import { chooseOccasion } from './ui-helpers.mjs';
+import { MOODS } from '../src/features/avatar/catalog/index.ts';
+import { OCCASIONS } from '../src/features/message/occasions/index.ts';
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
@@ -10,10 +13,9 @@ try {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(base + '/#/script');
   const input = page.getByRole('textbox', { name: 'Your message', exact: true });
-  const occasion = page.locator('#all-occasions');
-  assert.equal(await occasion.locator('option').count(), 32);
+  assert.equal(await page.locator('[data-occasion]').count(), OCCASIONS.length);
   await input.fill('This draft stays mine.');
-  await occasion.selectOption('anniversary');
+  await chooseOccasion(page, 'anniversary');
   await page.getByRole('button', { name: 'Shy', exact: true }).click();
   assert.equal(await input.inputValue(), 'This draft stays mine.');
   await page.locator('.example-preview summary').click();
@@ -24,7 +26,7 @@ try {
   await page.getByRole('button', { name: 'Use anniversary example' }).click();
   assert.match(await input.inputValue(), /^Me:.*\nFriend:/);
   assert.equal(await page.getByRole('button', { name: /^Two characters/ }).getAttribute('aria-pressed'), 'true');
-  await occasion.selectOption('diwali');
+  await chooseOccasion(page, 'diwali');
   await page.getByRole('button', { name: 'Excited', exact: true }).click();
   await page.getByRole('button', { name: 'Use diwali example' }).click();
   assert.match(await input.inputValue(), /Happy Diwali/);
@@ -51,10 +53,10 @@ try {
     if (await gallery.getAttribute('aria-expanded') !== 'true') await gallery.click();
     for (const width of [1440, 768, 375, 320]) {
       await page.setViewportSize({ width, height: 1000 });
-      const fits = await page.locator('.expression-tile .character-sprite').evaluateAll((elements) => elements.length === 48 && elements.every((element) => {
+      const fits = await page.locator('.expression-tile .character-sprite').evaluateAll((elements, expected) => elements.length === expected && elements.every((element) => {
         const box = element.getBoundingClientRect(), image = element.querySelector('svg').getBoundingClientRect(), cell = element.closest('.expression-tile').getBoundingClientRect();
         return image.left >= box.left && image.right <= box.right && image.top >= box.top && image.bottom <= box.bottom && box.left >= cell.left && box.right <= cell.right && box.top >= cell.top && box.bottom <= cell.bottom;
-      }));
+      }), MOODS.length);
       assert.ok(fits, avatar + ' gallery frames must fit at ' + width);
     }
     await page.locator('.expression-grid').screenshot({ path: 'artifacts/' + avatar.toLowerCase() + '-all-poses-mobile.png' });

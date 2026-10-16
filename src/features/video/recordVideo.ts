@@ -1,3 +1,5 @@
+import { occasionDetails } from '../message/occasions';
+import { themeDetails } from '../themes/index';
 import type { AvatarAsset } from '../avatar/types';
 import type { Story } from '../story/compileStory';
 import { browserVideoFormat, MAX_VIDEO_DURATION_MS, videoDuration } from './format';
@@ -11,7 +13,8 @@ export async function recordVideo({ story, cast, speed, reducedMotion, signal, o
   if (!format) throw new Error('This browser cannot create a video. Try a current Chrome, Edge, or Safari browser.');
   const durationMs = videoDuration(story.durationMs, speed);
   if (durationMs > MAX_VIDEO_DURATION_MS) throw new Error('Keep the video under 60 seconds. Shorten your message or increase the playback speed.');
-  const images = await loadCastImages(cast, signal);
+  const theme = themeDetails(occasionDetails(story.occasion).theme);
+  const images = await loadCastImages(cast, signal, theme.image ? [theme.image] : [], story.occasion, story.scenes);
   signal.throwIfAborted();
   if (document.hidden) throw new Error('Keep this tab visible while making the video. Try again when you are ready.');
   const canvas = document.createElement('canvas');

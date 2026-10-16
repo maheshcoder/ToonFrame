@@ -1,10 +1,10 @@
 # Character asset provenance and generation prompts
 
-Six PNG atlases in public/avatars are packaged project assets. The original four were created using the built-in image-generation tool. The user subsequently supplied male-extra-2.png and female-extra-2.png directly in the avatar folder; their generation process is not recorded here. No generation service or API key is added to the app.
+Eight PNG atlases in public/avatars are packaged project assets, including two user-supplied birthday sheets in the male/female birthday folders. The original four were created using the built-in image-generation tool. The user subsequently supplied male-extra-2.png and female-extra-2.png directly in the avatar folder; their generation process is not recorded here. No generation service or API key is added to the app.
 
 The user supplied male and female cartoon reference images in the conversation. Their original Downloads paths were readable at the start, but unavailable when copied. The base atlases were recreated from the visible references; they are **reference-derived recreations, not byte-for-byte copies of the originals**. Additional sheets supply the other moods. Identity, outfits, flower/accessories, and drawing style were retained as visual constraints.
 
-All atlases are 1024 × 1536. The original four use 3 columns × 4 rows; the two user-added extra-2 sheets use 4 columns × 6 rows. The app displays each frame through an SVG viewBox using contained proportions and safe padding. An explicit per-frame clip keeps neighboring atlas cells out of the letterbox margins. A 0.4% boundary gutter hides atlas dividers; the previous 4% bottom crop is removed. Video uses the same source crop and containment helper. White backgrounds blend into the stage. The source PNG pixels are not modified by the app.
+The six generic atlases are 1024 × 1536. The original four use 3 columns × 4 rows; the extra-2 sheets use 4 columns × 6 rows. The female birthday sheet is 1024 × 1536 and the male birthday sheet is 1086 × 1448; both have 3 columns × 4 rows. The app displays each frame through an SVG viewBox using contained proportions and safe padding. An explicit per-frame clip keeps neighboring atlas cells out of the letterbox margins. Measured per-frame rectangles account for uneven row/column spacing, with small sheet-specific gutters removing dividers. Generic uploads keep their equal-grid format. The earlier incorrect equal-grid cuts and 4% bottom crop are not used for these built-in sheets. Video uses the same source crop and containment helper. White backgrounds blend into the stage. The source PNG pixels are not modified by the app.
 
 | Asset | Role |
 | --- | --- |
@@ -14,8 +14,10 @@ All atlases are 1024 × 1536. The original four use 3 columns × 4 rows; the two
 | public/avatars/female-extra.png | Twelve additional female poses |
 | public/avatars/male-extra-2.png | Twenty-four user-added personal-message poses, 4 × 6 |
 | public/avatars/female-extra-2.png | Twenty-four user-added personal-message poses, 4 × 6 |
+| public/avatars/male/birthday/Male birthday expression-1.png | Twelve user-supplied birthday poses, 3 × 4, 1086 × 1448 |
+| public/avatars/female/birthday/Female Birthday-1.png | Twelve user-supplied birthday poses, 3 × 4, 1024 × 1536 |
 
-Exact frame orders live in src/features/avatar/expressions.ts. The user-facing custom generation prompt lives in src/features/avatar/prompt.ts and has a separate, consistent 12/24/48-frame order.
+Exact frame orders live in src/features/avatar/sheets/orders.ts and the male/female manifests. Expression metadata lives in src/features/avatar/catalog/. The user-facing custom generation prompt lives in src/features/avatar/prompt.ts and has a separate, consistent 12/24/48-frame order.
 
 ## Final base-sheet prompts
 
@@ -69,4 +71,31 @@ The extra-2 sheets were visually inspected and mapped without changing their pix
 
 These labels describe the visible poses and can be directed by matching mood tags. Grid-line gutters are hidden by the existing renderer's frame insets. Both the preview and video renderer use the sheet-specific 4 × 6 geometry. Full 48-expression uploads use a 6 × 8 grid with all moods in catalog order, at 1536 × 2304 recommended resolution. Older 12/24-expression uploads retain their previous order and use nearest-pose fallbacks for new moods.
 
+Occasion backgrounds use code-native vector paths in src/features/themes/shapes.ts, with 32 individually registered palettes and motif lists. No new raster assets or generated artwork were required for these backgrounds. Future optional background files go in public/themes and are registered by their local URL.
+
 The male extra-2 atlas has a light gray backdrop. A shared brightness(1.1) display filter lifts this backdrop to white before multiply blending in both SVG preview and canvas export. The uploaded source file is unchanged; the filter applies only to this built-in sheet.
+
+## User-supplied birthday packs
+
+The birthday source files are used unchanged. Their drawing order is in
+src/features/avatar/sheets/birthday.ts, shared by the male/female manifests:
+
+| Row | Column 1 | Column 2 | Column 3 |
+| --- | --- | --- | --- |
+| 1 | Waving | Excited with confetti | Laughing |
+| 2 | Surprised | Holding a gift | Hopeful / blowing candles |
+| 3 | Grateful | Hand over heart | Blushing |
+| 4 | Playful | Cheering | Blowing a kiss |
+
+A sheet-level occasion field selects these variants automatically for Birthday. They also appear as 12 individually labelled choices under Occasions → Birthday and can be selected manually with any background. Related
+feeling aliases resolve to these poses without adding duplicate keyboard tiles; unsupported sad/angry feelings use regular
+artwork. The full 48-mood catalog and custom-upload orders are unchanged.
+The male birthday sheet uses brightness(1.08) in preview and video to soften
+its gray paper background. All sheets use contained, proportional rendering.
+
+The female personal sheet has column edges near 276, 519, and 773 pixels,
+not 256/512/768. Its final row starts near 1251, not 1280. The female base
+sheet also has unequal row spacing. The manifests record measured bounds
+instead of cutting hair/flowers or showing part of the next row.
+
+No artwork was generated, copied, or modified for the sheet-validation update. The eight existing files contain 120 unique physical character poses (60 per character). All 32 occasion keyboard categories filter real character artwork; only Birthday has dedicated occasion sheets. New occasion packs are limited to 12 poses per file in a fixed 3 × 4 grid. More drawings belong in another registered file. The content check audits resolution, ratio, crops, blank cells, copied normalized pixels, and duplicate file hashes.

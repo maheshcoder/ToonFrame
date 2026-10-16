@@ -1,0 +1,12 @@
+import { EVERYDAY_OCCASIONS } from './everyday.ts';
+import { MILESTONES_OCCASIONS } from './milestones.ts';
+import { FAMILY_OCCASIONS } from './family.ts';
+import { FESTIVALS_OCCASIONS } from './festivals.ts';
+import { CUSTOM_OCCASIONS } from './custom.ts';
+const ALL_OCCASIONS = [...EVERYDAY_OCCASIONS, ...MILESTONES_OCCASIONS, ...FAMILY_OCCASIONS, ...FESTIVALS_OCCASIONS, ...CUSTOM_OCCASIONS] as const;
+export type OccasionId = typeof ALL_OCCASIONS[number]['id'];
+export const QUICK_OCCASION_IDS: readonly OccasionId[] = ['just-because','birthday','love','celebration','invitation','funny-anger','apology','teasing'];
+export const QUICK_OCCASIONS = QUICK_OCCASION_IDS.map((id) => ALL_OCCASIONS.find((item) => item.id === id)!);
+export const OCCASIONS = [...QUICK_OCCASIONS, ...ALL_OCCASIONS.filter((item) => !QUICK_OCCASION_IDS.includes(item.id))];
+export const occasionDetails = (id: OccasionId) => ALL_OCCASIONS.find((item) => item.id === id)!;
+export { OCCASION_GROUPS } from './definition.ts';

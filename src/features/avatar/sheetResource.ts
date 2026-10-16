@@ -1,5 +1,8 @@
 import { SHEET_FORMATS } from './expressions.ts';
 import type { SheetLayout } from './expressions.ts';
+import { validateSheetQuality } from './sheetPolicy.ts';
+import { cropFrame } from './framing.ts';
+import { duplicatePoses, poseFingerprint } from './imageFingerprint.ts';
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export type ImageDimensions = { width: number; height: number };
@@ -10,10 +13,8 @@ export function validateImage(file: Pick<File, 'type' | 'size' | 'name'>): strin
   return null;
 }
 export function validateDimensions({ width, height }: ImageDimensions, layout: SheetLayout) {
-  if (Math.abs(width / height - 2 / 3) > 0.04) return 'Use a 2:3 portrait sheet, such as 1024 × 1536 px. A single portrait or square image will not line up with the expression grid.';
-  const minimum = SHEET_FORMATS[layout].minWidth;
-  if (width < minimum || height < minimum * 1.5) return 'This sheet is too small. Use ' + SHEET_FORMATS[layout].width + ' × ' + SHEET_FORMATS[layout].height + ' px for clear expressions.';
-  return null;
+  const format = SHEET_FORMATS[layout];
+  return validateSheetQuality(width, height, format.columns, format.rows)[0] ?? null;
 }
 export function decodeImage(url: string): Promise<ImageDimensions> {
   return new Promise((resolve, reject) => {
@@ -29,20 +30,38 @@ export function decodeImage(url: string): Promise<ImageDimensions> {
     image.src = url;
   });
 }
+export async function inspectExpressionSheet(url: string, layout: SheetLayout, dimensions: ImageDimensions): Promise<string[]> {
+  const image = new Image(); image.src = url; await image.decode();
+  const { width, height } = dimensions, format = SHEET_FORMATS[layout];
+  const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw new Error('Your browser could not check this sheet. Try another browser.');
+  context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, width, height).data;
+  const signatures = format.order.map((_, index) => poseFingerprint(pixels, width, height, cropFrame(width, height, index, format.columns, format.rows)));
+  canvas.width = canvas.height = 0;
+  const blank = signatures.indexOf(null);
+  if (blank !== -1) throw new Error('Cell ' + (blank + 1) + ' looks empty. Every cell needs one clear character expression on a plain background.');
+  const duplicate = duplicatePoses(signatures)[0];
+  if (duplicate) throw new Error('Cells ' + (duplicate[0] + 1) + ' and ' + (duplicate[1] + 1) + ' repeat the same pose. Use a different expression in every cell.');
+  return signatures as string[];
+}
 
-/** The upload library owns URLs until removal, replacement, or app unmount. */
+/** The upload library owns URLs and fingerprints until removal or app unmount. */
 export class SheetResources {
-  private owned = new Set<string>();
+  private owned = new Map<string, readonly string[]>();
   private pending = new Set<string>();
   private generation = 0;
   private create: (file: File) => string;
   private revoke: (url: string) => void;
   private decode: (url: string) => Promise<ImageDimensions>;
+  private inspect: typeof inspectExpressionSheet;
   constructor(
     create = (file: File) => URL.createObjectURL(file),
     revoke = (url: string) => URL.revokeObjectURL(url),
     decode = decodeImage,
-  ) { this.create = create; this.revoke = revoke; this.decode = decode; }
+    inspect = inspectExpressionSheet,
+  ) { this.create = create; this.revoke = revoke; this.decode = decode; this.inspect = inspect; }
 
   async load(file: File, layout: SheetLayout) {
     this.cancelPending();
@@ -56,8 +75,12 @@ export class SheetResources {
       if (generation !== this.generation) return null;
       const problem = validateDimensions(dimensions, layout);
       if (problem) throw new Error(problem);
+      const signatures = await this.inspect(url, layout, dimensions);
+      if (generation !== this.generation) return null;
+      const existing = new Set([...this.owned.values()].flat());
+      if (signatures.some((signature) => existing.has(signature))) throw new Error('This sheet repeats a pose already uploaded. Choose that character from your library, or upload a sheet with new expressions.');
       this.pending.delete(url);
-      this.owned.add(url);
+      this.owned.set(url, signatures);
       return url;
     } catch (error) {
       if (generation !== this.generation) return null;
@@ -74,7 +97,7 @@ export class SheetResources {
   }
   dispose() {
     this.cancelPending();
-    for (const url of this.owned) this.revoke(url);
+    for (const url of this.owned.keys()) this.revoke(url);
     this.owned.clear();
   }
 }
