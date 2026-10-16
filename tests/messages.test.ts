@@ -85,9 +85,9 @@ test('plain-text examples need no emoji or tags and automatically add expression
 });
 
 import { messageExample } from '../src/features/message/examples.ts';
-import { cropFrame, containFrame } from '../src/features/avatar/framing.ts';
+import { containFrame } from '../src/features/avatar/framing.ts';
 import { MOODS } from '../src/features/avatar/expressions.ts';
-import { avatarFrame, BUILTINS } from '../src/features/avatar/types.ts';
+import { avatarSourceRect, avatarFrame, BUILTINS } from '../src/features/avatar/types.ts';
 
 test('every occasion and selected feeling has valid, distinct solo and two-speaker examples', () => {
   const examples = new Set<string>();
@@ -109,12 +109,11 @@ test('every occasion and selected feeling has valid, distinct solo and two-speak
   assert.match(messageExample({ occasion: 'birthday', emotion: 'shy' }, true, ['Sam', 'Jo']), /^Sam:.*\nJo:/);
 });
 
-test('all built-in frames keep almost all source artwork and fit safely at thumbnail and video sizes', () => {
+test('all built-in frames use valid measured crops and fit safely at thumbnail and video sizes', () => {
   for (const avatar of BUILTINS) for (const mood of MOODS) {
     const frame = avatarFrame(avatar, mood.id);
-    const source = cropFrame(1024, 1536, frame.frame, frame.columns, frame.rows);
-    const cellWidth = 1024 / frame.columns, cellHeight = 1536 / frame.rows;
-    assert.ok(source.width >= cellWidth * .99 && source.height >= cellHeight * .99);
+    const source = avatarSourceRect(frame, 1024, 1536);
+    assert.ok(source.width > 0 && source.height > 0);
     assert.ok(source.x >= 0 && source.y >= 0 && source.x + source.width <= 1024 && source.y + source.height <= 1536);
     for (const size of [45, 70, 120, 199, 259, 306]) {
       const box = { x: 0, y: 0, width: size, height: size };

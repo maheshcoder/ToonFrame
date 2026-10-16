@@ -96,6 +96,6 @@ export function App() {
       {step === 'animation' && story && <AnimationPage key={story.id} story={story} onStory={setStory}
         cast={castIds.map((id) => library.find((avatar) => avatar.id === id) ?? BUILTINS[0])} onEdit={() => navigate('script')} />}
     </main>
-    <footer><span>Avatar Message Studio <span>✳</span> A little more expressive.</span><span>For friends, family, and your favourite person.</span></footer>
+    <footer><span>Avatar Message Studio <span>✳</span> A little more expressive.</span> <span>Made by S.Maheswar</span><span>For friends, family, and your favourite person.</span></footer>
    </div>;
 }

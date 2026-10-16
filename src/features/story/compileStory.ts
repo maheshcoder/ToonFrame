@@ -1,10 +1,12 @@
+import type { AvatarArtwork } from '../avatar/types.ts';
+import { matchEmoji, matchWords } from '../avatar/catalog/recognition.ts';
 import { isMood, moodDetails, MOODS } from '../avatar/expressions.ts';
 import type { Mood } from '../avatar/expressions.ts';
 import { messageExample } from '../message/examples.ts';
 import { DEFAULT_MESSAGE_OPTIONS, emotionMood, occasionDetails } from '../message/occasions.ts';
 import type { MessageOptions, OccasionId } from '../message/occasions.ts';
 export type StoryMode = 'auto' | 'solo' | 'dialogue';
-export type Scene = { id: string; speakerIndex: number; speaker: string; text: string; mood: Mood; emoji: string; durationMs: number };
+export type Scene = { id: string; speakerIndex: number; speaker: string; text: string; mood: Mood; emoji: string; durationMs: number; artwork?: AvatarArtwork };
 export type Story = { id: string; scenes: Scene[]; speakers: string[]; dialogue: boolean; durationMs: number; occasion: OccasionId };
 export const MAX_SCRIPT_LENGTH = 5000;
 export const SOLO_EXAMPLE = occasionDetails('birthday').example;
@@ -15,80 +17,17 @@ export function validateScript(text: string) {
   if (!/[\p{L}\p{N}\p{Extended_Pictographic}]/u.test(text)) return 'Add some words or emoji to your message.';
   return null;
 }
-const EMOJI_RULES: [Mood, string[]][] = [
-  ['joyful', ['🥳']], ['laughing', ['😂']], ['gift', ['🎁']], ['love-heart', ['💖']],
-  ['blushing', ['😊']], ['flirty', ['😍']], ['missing-you', ['💭']], ['kiss', ['😘']],
-  ['wave', ['👋']], ['cheering', ['🙌']], ['playful', ['😜', '😝']], ['inviting', ['🪩']],
-  ['mock-angry', ['😤']], ['pouting', ['😗']], ['frustrated', ['😩']], ['furious', ['🤬']],
-  ['sorry', ['🥺']], ['downcast', ['😞']], ['heartfelt', ['🫶']], ['hopeful', ['🥹']],
-  ['smug', ['😏']], ['shocked', ['😲']], ['giggling', ['🤣']],
-  ['happy', ['😄', '😀', '😁']], ['love', ['❤️', '❤', '🥰', '💕', '💌']],
-  ['angry', ['😠', '😡']], ['sad', ['😔', '☹️', '🙁']], ['surprised', ['😮', '😯', '🤯']],
-  ['thinking', ['🤔']], ['cry', ['😭', '😢']], ['wink', ['😉']], ['confused', ['😕', '🤨', '😵']],
-  ['sleepy', ['😴', '💤']], ['excited', ['🤩']], ['worried', ['😟', '😥']], ['scared', ['😨', '😱', '😰']],
-  ['proud', ['😎']], ['shy', ['☺️', '☺', '🙈', '🫣']], ['awkward', ['😅', '😬']], ['annoyed', ['🙄']],
-  ['grateful', ['🙏']], ['curious', ['🧐']], ['bored', ['🥱', '😒']], ['calm', ['😌', '🧘']],
-  ['determined', ['💪', '🔥']], ['celebrate', ['🎉', '🎊', '🏆', '🥇', '🎂']],
-];
 const TAG_ALIASES: Record<string, Mood> = { loving: 'love' };
 function tagMood(tag: string): Mood | undefined { return isMood(tag) ? tag : TAG_ALIASES[tag]; }
-const WORD_RULES: [Mood, RegExp][] = [
-  ['calm', /\b(?:not (?:mad|angry)|we(?:'re| are) good|all good|no worries)\b/i],
-  ['sorry', /\b(?:sorry|my fault|messed up|apologize|apologise)\b/i],
-  ['hopeful', /\b(?:friends again|forgive me|make it up to you|hopeful)\b/i],
-  ['mock-angry', /\b(?:mad at|never forgiving|forgot my birthday|mock anger)\b/i],
-  ['missing-you', /\b(?:miss you|missed you|missing you)\b/i],
-  ['gift', /\b(?:birthday present|a gift|your present|a present|a surprise gift)\b/i],
-  ['kiss', /\b(?:sending kisses|blow a kiss|kisses for you|sending you a kiss)\b/i],
-  ['wave', /\b(?:waving hello|waving goodbye)\b/i],
-  ['cheering', /\b(?:cheering|cheer for you|victory dance)\b/i],
-  ['flirty', /\b(?:flirty|flirting)\b/i],
-  ['pouting', /\b(?:pouting|pout)\b/i],
-  ['frustrated', /\b(?:frustrated|frustrating)\b/i],
-  ['furious', /\b(?:furious|rage)\b/i],
-  ['giggling', /\b(?:giggling|giggle)\b/i],
-  ['laughing', /\b(?:laughing|hahaha|lol)\b/i],
-  ['cheeky', /\b(?:cheeky)\b/i],
-  ['smug', /\b(?:smug)\b/i],
-  ['inviting', /\b(?:invited|come over|join the party)\b/i],
-
-  ['sad', /\b(?:not happy|unhappy|sad|lonely|heartbroken|disappointed|sorry|my fault|messed up)\b/i],
-  ['grateful', /\b(?:friends again|forgive me|make it up to you|thank you|thanks|grateful|thankful)\b/i],
-  ['playful', /\b(?:save me.*cake|unless.*cake|bring.*cake|don'?t be late|just kidding|kidding|teasing|cheeky|playful|annoy you|cupcakes)\b/i],
-  ['angry', /\b(?:angry|mad at|furious|hate|rage|never forgiving|forgot my birthday)\b/i],
-  ['cry', /\b(?:cry|crying|tears|sobbing)\b/i],
-  ['scared', /\b(?:scared|afraid|terrified|frightened|help me)\b/i],
-  ['worried', /\b(?:worried|worry|nervous|anxious)\b/i],
-  ['celebrate', /\b(?:congratulations|congrats|we won|(?:i|we) did it|hooray|celebrate)\b/i],
-  ['excited', /\b(?:happy birthday|excited|amazing|awesome|can't wait|cannot wait|yay|invited)\b/i],
-  ['love', /\b(?:love|adore|sweetheart|darling|miss you|hugs|kiss|mean the world|make my days better|a lot)\b/i],
-  ['surprised', /\b(?:wow|surprise|surprised|really|unbelievable)\b/i],
-  ['confused', /\b(?:confused|don't understand|do not understand|what do you mean|huh)\b/i],
-  ['sleepy', /\b(?:sleepy|sleep|goodnight|tired|exhausted)\b/i],
-  ['bored', /\b(?:bored|boring|whatever)\b/i],
-  ['proud', /\b(?:proud|nailed it|looking good)\b/i],
-  ['blushing', /\b(?:shy|blush|blushing|embarrassed)\b/i],
-  ['awkward', /\b(?:awkward|oops|uh oh)\b/i],
-  ['annoyed', /\b(?:annoyed|annoying|ugh|seriously|stop it)\b/i],
-  ['determined', /\b(?:determined|i can do|never give up|let's do|lets do|i will try)\b/i],
-  ['calm', /\b(?:calm|relax|peace|breathe)\b/i],
-  ['thinking', /\b(?:think|thinking|wonder|maybe|idea)\b/i],
-  ['happy', /\b(?:happy|great|wonderful|smile|hello|hi|hey)\b/i],
-];
 export function detectMood(text: string, options?: MessageOptions): Mood {
   const explicit = [...text.matchAll(/\[([a-z-]+)\]/gi)].map((match) => tagMood(match[1].toLowerCase())).find(Boolean);
   if (explicit) return explicit;
-  let result: Mood | null = null;
-  let lastIndex = -1;
-  for (const [mood, emojis] of EMOJI_RULES) for (const emoji of emojis) {
-    const index = text.lastIndexOf(emoji);
-    if (index > lastIndex) { lastIndex = index; result = mood; }
-  }
-  if (result) return result;
+  const emoji = matchEmoji(text);
+  if (emoji) return emoji;
   const selected = options && emotionMood(options.emotion);
   if (selected) return selected;
-  const normalized = text.replace(/[’‘]/g, "'");
-  for (const [mood, pattern] of WORD_RULES) if (pattern.test(normalized)) return mood;
+  const inferred = matchWords(text);
+  if (inferred) return inferred;
   if (options && options.occasion !== 'just-because') return occasionDetails(options.occasion).mood;
   return /\?/.test(text) ? 'curious' : 'neutral';
 }

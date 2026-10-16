@@ -1,16 +1,18 @@
-import { containFrame, cropFrame } from '../avatar/framing.ts';
-import { avatarFrame, avatarFrameFilter } from '../avatar/types.ts';
+import { containFrame } from '../avatar/framing.ts';
+import { avatarFrame, avatarFrameFilter, avatarSourceRect, avatarExpressionDetails } from '../avatar/types.ts';
 import type { AvatarAsset } from '../avatar/types.ts';
-import { MOODS, moodDetails } from '../avatar/expressions.ts';
+import { MOODS } from '../avatar/expressions.ts';
 import type { Scene, Story } from '../story/compileStory.ts';
+import { themeDetails } from '../themes/index.ts';
+import { drawThemeBackground } from '../themes/drawBackground.ts';
 import { occasionDetails } from '../message/occasions.ts';
 
 export const VIDEO_WIDTH = 720;
 export const VIDEO_HEIGHT = 900;
 export type Images = Map<string, HTMLImageElement>;
 
-export async function loadCastImages(cast: AvatarAsset[], signal: AbortSignal): Promise<Images> {
-  const urls = [...new Set(cast.flatMap((avatar) => MOODS.map((mood) => avatarFrame(avatar, mood.id).url)))];
+export async function loadCastImages(cast: AvatarAsset[], signal: AbortSignal, extraUrls: readonly string[] = [], occasion?: string, scenes: readonly Scene[] = []): Promise<Images> {
+  const urls = [...new Set([...cast.flatMap((avatar) => MOODS.map((mood) => avatarFrame(avatar, mood.id, occasion).url)), ...scenes.map((scene) => avatarFrame(cast[scene.speakerIndex],scene.mood,occasion,scene.artwork).url), ...extraUrls])];
   const images: Images = new Map();
   await Promise.all(urls.map((url) => new Promise<void>((resolve, reject) => {
     const image = new Image();
@@ -23,7 +25,7 @@ export async function loadCastImages(cast: AvatarAsset[], signal: AbortSignal): 
       if (error) reject(error); else { images.set(url, image); resolve(); }
     }
     image.onload = () => finish();
-    image.onerror = () => finish(new Error('A character image could not be opened. Re-upload it and try again.'));
+    image.onerror = () => finish(new Error('An avatar or background image could not be opened. Check the image file and try again.'));
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) abort(); else image.src = url;
   })));
@@ -67,15 +69,11 @@ function label(context: CanvasRenderingContext2D, text: string, x: number, y: nu
 export function drawMessageFrame(context: CanvasRenderingContext2D, story: Story, cast: AvatarAsset[], images: Images, time: number, reducedMotion: boolean) {
   const { scene, elapsed } = sceneAtTime(story, time);
   const occasion = occasionDetails(story.occasion);
-  const mood = moodDetails(scene.mood);
+  const mood = avatarExpressionDetails(cast[scene.speakerIndex],scene.mood,story.occasion,scene.artwork);
   const seconds = elapsed / 1000;
   context.clearRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
-  context.fillStyle = occasion.background; context.fillRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
-  context.fillStyle = occasion.accent;
-  context.beginPath(); context.ellipse(120, 860, 650, 240, -.15, 0, Math.PI * 2); context.fill();
-  context.globalAlpha = .45;
-  context.beginPath(); context.arc(654, 88, 145, 0, Math.PI * 2); context.fill();
-  context.globalAlpha = 1;
+  const theme = themeDetails(occasion.theme);
+  drawThemeBackground(context, theme, VIDEO_WIDTH, VIDEO_HEIGHT, theme.image ? images.get(theme.image) : undefined, { timeMs: time, reducedMotion });
   context.textAlign = 'center';
   label(context, occasion.emoji + '  ' + occasion.heading, 360, 88, 29, '#304b3a', 600);
 
@@ -97,13 +95,13 @@ export function drawMessageFrame(context: CanvasRenderingContext2D, story: Story
   lines.forEach((line, index) => label(context, line, 360, 222 + index * lineHeight, size, '#304b3a', 600));
   const emojiY = Math.max(420, 180 + bubbleHeight);
   const bounce = reducedMotion ? 0 : Math.sin(seconds * 3) * 8;
-  label(context, scene.emoji, 586, Math.min(emojiY, 487) + bounce, 62);
+  label(context, mood.emoji, 586, Math.min(emojiY, 487) + bounce, 62);
 
   cast.forEach((avatar, index) => {
     const active = scene.speakerIndex === index;
-    const frame = avatarFrame(avatar, active ? scene.mood : 'neutral');
+    const frame = avatarFrame(avatar, active ? scene.mood : 'neutral', story.occasion, active ? scene.artwork : undefined);
     const image = images.get(frame.url)!;
-    const source = cropFrame(image.naturalWidth, image.naturalHeight, frame.frame, frame.columns, frame.rows);
+    const source = avatarSourceRect(frame, image.naturalWidth, image.naturalHeight);
     const width = cast.length === 1 ? 306 : 259, height = width;
     const fit = containFrame(source, { x: -width / 2, y: -height / 2, width, height });
     const x = cast.length === 1 ? 360 : index === 0 ? 206 : 514;

@@ -1,0 +1,27 @@
+import type { DecorationKind } from './definition.ts';
+export type ShapePart = { d: string; fill?: boolean; stroke?: boolean; highlight?: boolean };
+export const THEME_SHAPES: Record<DecorationKind, readonly ShapePart[]> = {
+  balloon: [{ d: 'M50 5C14 5 14 62 50 76C86 62 86 5 50 5ZM50 76L44 84L56 84Z', fill: true }, { d: 'M50 83Q72 91 51 99', stroke: true }],
+  bunting: [{ d: 'M2 15Q50 31 98 15', stroke: true }, { d: 'M8 18L18 45L29 23ZM37 25L49 52L61 25ZM70 23L82 45L93 18Z', fill: true }],
+  confetti: [{ d: 'M9 6L20 11L12 28L2 23ZM70 9L81 5L88 25L77 29ZM36 41L47 42L46 63L35 62ZM73 72L84 66L94 84L83 90ZM5 75L16 72L22 93L11 96Z', fill: true }],
+  heart: [{ d: 'M50 89C-8 48 4 12 27 12C39 12 47 22 50 28C53 22 61 12 73 12C96 12 108 48 50 89Z', fill: true }],
+  star: [{ d: 'M50 4L63 34L96 37L71 59L78 93L50 76L22 93L29 59L4 37L37 34Z', fill: true }],
+  sparkle: [{ d: 'M50 3Q56 43 97 50Q56 57 50 97Q44 57 3 50Q44 43 50 3Z', fill: true }],
+  flower: [{ d: 'M50 34C28-7 5 20 32 45C-9 30-6 66 33 60C10 94 45 108 50 68C57 108 91 94 67 60C106 66 109 30 68 45C95 20 72-7 50 34Z', fill: true }, { d: 'M61 51A11 11 0 1 0 39 51A11 11 0 1 0 61 51Z', fill: true, highlight: true }],
+  moon: [{ d: 'M78 6A45 45 0 1 0 94 77A42 42 0 0 1 78 6Z', fill: true }],
+  lantern: [{ d: 'M25 23Q50 7 75 23L82 72Q50 91 18 72ZM36 13L36 6L64 6L64 13Z', fill: true }, { d: 'M50 23L50 77M32 25L28 70M68 25L72 70M38 87L38 98M50 87L50 98M62 87L62 98', stroke: true }],
+  gift: [{ d: 'M10 35L90 35L90 52L10 52ZM16 56L84 56L84 94L16 94ZM47 33C5 34 15-9 41 11L50 27C54-6 93 0 78 22C73 30 61 33 47 33Z', fill: true }, { d: 'M50 36L50 94', stroke: true, highlight: true }],
+  mirrorball: [{ d: 'M50 6L50 19M88 57A38 38 0 1 0 12 57A38 38 0 1 0 88 57Z', fill: true }, { d: 'M17 43L83 43M12 58L88 58M18 73L82 73M50 20L50 94M31 25Q20 58 31 88M69 25Q80 58 69 88', stroke: true, highlight: true }],
+  ring: [{ d: 'M80 64A30 30 0 1 0 20 64A30 30 0 1 0 80 64Z', stroke: true }, { d: 'M28 17L39 5L61 5L72 17L50 37Z', fill: true }],
+  cap: [{ d: 'M3 31L50 10L97 31L50 53ZM22 49L50 62L78 49L78 77Q50 95 22 77Z', fill: true }, { d: 'M94 34L94 79L87 91', stroke: true }],
+  sun: [{ d: 'M73 50A23 23 0 1 0 27 50A23 23 0 1 0 73 50Z', fill: true }, { d: 'M50 2L50 15M50 85L50 98M2 50L15 50M85 50L98 50M15 15L24 24M76 76L85 85M15 85L24 76M76 24L85 15', stroke: true }],
+  leaf: [{ d: 'M12 89C-3 28 52 3 94 5C92 68 55 98 12 89Z', fill: true }, { d: 'M9 94L77 24', stroke: true, highlight: true }],
+  home: [{ d: 'M3 44L50 4L97 44L85 44L85 94L15 94L15 44Z', fill: true }, { d: 'M41 58L59 58L59 94L41 94ZM24 52L34 52L34 67L24 67ZM66 52L76 52L76 67L66 67Z', fill: true, highlight: true }],
+  bottle: [{ d: 'M39 4L61 4L64 18L69 18L69 30L76 43L76 89Q50 100 24 89L24 43L31 30L31 18L36 18Z', fill: true }, { d: 'M52 48L68 48M52 62L68 62M52 76L68 76', stroke: true, highlight: true }],
+  ribbon: [{ d: 'M44 45C-10 19 13-9 43 18L50 38C59-6 102 6 88 31C80 44 65 46 54 47L86 90L64 84L59 99L50 58L41 99L36 84L14 90Z', fill: true }],
+  cupcake: [{ d: 'M21 58C-9 43 12 21 30 29C23-1 59-2 61 22C88 10 103 45 81 58ZM24 63L76 63L69 96L31 96Z', fill: true }, { d: 'M48 8A7 7 0 1 0 34 8A7 7 0 1 0 48 8Z', fill: true, highlight: true }],
+  bolt: [{ d: 'M57 2L14 56L43 56L33 98L88 36L58 36Z', fill: true }],
+  plane: [{ d: 'M3 35L98 3L67 97L46 59L3 35ZM46 59L98 3M46 59L38 83L33 51', fill: true, stroke: true }],
+  splash: [{ d: 'M15 32C-8 5 27-7 38 16C60-9 81 2 73 26C111 10 111 47 82 50C113 78 87 103 65 80C55 116 23 102 29 77C-8 91-10 54 18 50Z', fill: true }],
+  tree: [{ d: 'M50 2L20 34L32 34L10 63L26 63L2 91L98 91L74 63L90 63L68 34L80 34ZM44 91L56 91L56 100L44 100Z', fill: true }],
+};

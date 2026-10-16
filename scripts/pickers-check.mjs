@@ -1,0 +1,140 @@
+import { chromium } from 'playwright-core';
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { OCCASIONS } from '../src/features/message/occasions/index.ts';
+import { BUILTINS } from '../src/features/avatar/types.ts';
+import { expressionsForOccasion } from '../src/features/avatar/occasionExpressions.ts';
+import { MOODS } from '../src/features/avatar/catalog/index.ts';
+import { chooseOccasion } from './ui-helpers.mjs';
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:5173';
+const browser = await chromium.launch({ ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : { channel: 'chrome' }), headless: true });
+const errors = [], checks = [];
+const pass = (message) => { checks.push(message); console.log('PASS ' + message); };
+await mkdir('artifacts', { recursive: true });
+async function noOverflow(page) { assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)); }
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto(base + '/#/script');
+  const rail = page.locator('.occasion-rail');
+  assert.equal(await rail.locator('[data-occasion]').count(), OCCASIONS.length);
+  assert.equal(await page.locator('.message-settings select').count(), 0);
+  const input = page.getByRole('textbox', { name: 'Your message', exact: true });
+  await input.fill('Keep my little message.');
+  await page.getByRole('button', { name: 'Next occasions', exact: true }).click();
+  assert.ok(await rail.evaluate((element) => element.scrollLeft > 50));
+  await page.getByRole('button', { name: 'Previous occasions', exact: true }).click();
+  await rail.hover(); await page.mouse.wheel(550, 0); await page.waitForTimeout(150);
+  assert.ok(await rail.evaluate((element) => element.scrollLeft > 50));
+  const first = rail.locator('[data-occasion]').first(), last = rail.locator('[data-occasion]').last();
+  await first.focus(); await page.keyboard.press('Home'); await page.keyboard.press('End');
+  assert.equal(await last.evaluate((element) => element === document.activeElement), true);
+  assert.notEqual(await last.evaluate((element) => getComputedStyle(element).outlineStyle), 'none');
+  await page.keyboard.press('Enter');
+  assert.equal(await last.getAttribute('aria-pressed'), 'true');
+  assert.equal(await input.inputValue(), 'Keep my little message.');
+  for (const occasion of OCCASIONS) {
+    await chooseOccasion(page, occasion.id);
+    assert.equal(await page.locator('.theme-preview .theme-background').getAttribute('data-theme'), occasion.theme);
+  }
+  pass('All occasions are browsable without a dropdown; arrows, trackpad scrolling, keyboard selection, and draft preservation work');
+  for (const width of [1440, 768, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await chooseOccasion(page, 'birthday'); await noOverflow(page);
+    await page.locator('.message-settings').screenshot({ path: 'artifacts/occasion-swipe-' + width + '.png' });
+  }
+  const touchPage = await browser.newPage({ viewport: { width: 375, height: 900 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  touchPage.on('pageerror', (error) => errors.push(error.message));
+  await touchPage.goto(base + '/#/script');
+  const touchRail = touchPage.locator('.occasion-rail');
+  await touchRail.scrollIntoViewIfNeeded();
+  const box = await touchRail.boundingBox();
+  const cdp = await touchPage.context().newCDPSession(touchPage);
+  const x = box.x + box.width - 22, y = box.y + box.height / 2;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+  for (let step = 1; step <= 8; step++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - step * 28, y, id: 1 }] });
+    await touchPage.waitForTimeout(20);
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await touchPage.waitForTimeout(150);
+  assert.ok(await touchRail.evaluate((element) => element.scrollLeft > 60), 'A real touch swipe must move the occasion row');
+  await touchPage.locator('[data-occasion="celebration"]').tap();
+  assert.equal(await touchPage.locator('[data-occasion="celebration"]').getAttribute('aria-pressed'), 'true');
+  await noOverflow(touchPage); await touchPage.close();
+  pass('Native touch swiping and tapping work, with no page overflow at 320/375/768/1440px');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: /^Two characters/ }).click();
+  await page.locator('#cast-0').selectOption('male'); await page.locator('#cast-1').selectOption('female');
+  await input.fill('Me: I have a little surprise!\nFriend: Tell me everything.');
+  await page.getByRole('button', { name: 'Animate my message' }).click();
+  await page.getByRole('button', { name: 'Play animation', exact: true }).click();
+  await page.waitForTimeout(180);
+  const trigger = page.getByRole('button', { name: 'Expression for scene 2', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Expressions for scene 2', exact: true });
+  await dialog.waitFor();
+  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 12);
+  assert.equal(await dialog.locator('select').count(), 0);
+  assert.ok(await dialog.locator('.expression-option').evaluateAll((buttons) => buttons.every((button) => button.querySelector('[data-avatar="female"]') && button.querySelector('.expression-option-emoji').textContent.trim())));
+  const time = await page.locator('#timeline').inputValue();
+  await page.waitForTimeout(200); assert.equal(await page.locator('#timeline').inputValue(), time);
+  await dialog.getByRole('button', { name: 'Personal', exact: true }).click();
+  assert.equal(await dialog.locator('.expression-option').count(), 24);
+  await dialog.getByRole('button', { name: 'Classic', exact: true }).click();
+  assert.equal(await dialog.locator('.expression-option').count(), 24);
+  await dialog.getByRole('button', { name: 'Occasions', exact: true }).click();
+  assert.equal(await dialog.locator('[data-expression-occasion]').count(), OCCASIONS.length);
+  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 12);
+  for (const occasion of OCCASIONS) {
+    await dialog.locator('[data-expression-occasion="' + occasion.id + '"]').click();
+    assert.equal(await dialog.locator('.expression-option').count(), expressionsForOccasion(BUILTINS[1],occasion.id).length);
+    if (occasion.id !== 'birthday') assert.ok(await dialog.getByText('Related poses from', { exact: false }).isVisible());
+  }
+  await dialog.getByRole('button', { name: 'All', exact: true }).click();
+  const physicalPoses = await dialog.locator('.expression-option').evaluateAll((tiles) => tiles.map((tile) => tile.dataset.artwork));
+  assert.equal(new Set(physicalPoses).size, physicalPoses.length);
+  const search = dialog.getByRole('searchbox', { name: 'Search expressions', exact: true });
+  await search.fill('hopeful'); assert.equal(await dialog.locator('.expression-option').count(), 2);
+  const hopeful = dialog.getByRole('button', { name: 'Hopeful', exact: true });
+  await hopeful.focus(); await page.keyboard.press('Space');
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  assert.equal(await trigger.getAttribute('data-mood'), 'hopeful');
+  assert.equal(await page.locator('.stage-person.active [data-avatar="female"][data-expression="hopeful"]').count(), 1);
+  assert.equal(await page.evaluate(() => document.body.style.overflow), '');
+  assert.equal(await trigger.evaluate((element) => element === document.activeElement), true);
+  pass('The scene picker shows character poses with emoji, pauses playback, filters/searches, and applies the selected feeling to the right speaker');
+  await trigger.click();
+  const options = dialog.locator('.expression-option');
+  await options.first().focus(); await page.keyboard.press('ArrowRight');
+  assert.equal(await options.nth(1).evaluate((element) => element === document.activeElement), true);
+  await page.keyboard.press('End'); await page.keyboard.press('Tab');
+  assert.ok(await page.evaluate(() => Boolean(document.activeElement.closest('.expression-dialog'))));
+  await search.fill('no-such-feeling');
+  assert.equal(await options.count(), 0); assert.ok(await dialog.getByText('No matching expressions.', { exact: false }).isVisible());
+  await search.fill('');
+  for (const width of [1440, 768, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 }); await noOverflow(page);
+    const rect = await dialog.boundingBox();
+    assert.ok(rect.x >= -1 && rect.x + rect.width <= width + 1 && rect.y >= -1 && rect.y + rect.height <= 901);
+    await dialog.screenshot({ path: 'artifacts/expression-keyboard-' + width + '.png' });
+    await dialog.getByRole('button', { name: 'Occasions', exact: true }).click();
+    await dialog.locator('[data-expression-occasion="birthday"]').click();
+    await noOverflow(page);
+    const keyboard = await dialog.locator('.expression-keyboard').boundingBox();
+    assert.ok(keyboard.height > 100, 'Occasion filters must leave usable room for the character grid');
+    assert.equal(await dialog.locator('.expression-option').count(),12);
+    await dialog.screenshot({ path: 'artifacts/occasion-expression-keyboard-' + width + '.png' });
+    await dialog.getByRole('button', { name: 'All', exact: true }).click();
+  }
+  await page.keyboard.press('Escape');
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  await page.getByRole('button', { name: 'Expression for scene 1', exact: true }).click();
+  const maleDialog = page.getByRole('dialog');
+  assert.ok(await maleDialog.locator('.expression-option .character-sprite').evaluateAll((sprites) => sprites.every((sprite) => sprite.dataset.avatar === 'male')));
+  await maleDialog.getByRole('button', { name: 'Joyful', exact: true }).click();
+  assert.equal(await page.locator('.stage-person.active [data-avatar="male"][data-expression="joyful"]').count(), 1);
+  pass('Expression keyboard fits phones/tablets/desktop; arrow navigation, focus trap, Escape, focus return, empty search, and male/female casts work');
+  assert.deepEqual(errors, []);
+  await writeFile('artifacts/pickers-report.json', JSON.stringify({ checks, errors }, null, 2));
+} finally { await browser.close(); }

@@ -16,3 +16,13 @@ export function containFrame(source: Pick<Rect, 'width' | 'height'>, box: Rect, 
   const width = source.width * scale, height = source.height * scale;
   return { x: box.x + (box.width - width) / 2, y: box.y + (box.height - height) / 2, width, height };
 }
+
+// Normalize measured cell edges from a source atlas. These bounds may be uneven;
+// SVG and canvas consume the same rectangles rather than guessing an equal grid.
+export function atlasFrames(width: number, height: number, xEdges: readonly number[], yEdges: readonly number[], gutter = FRAME_GUTTER): Rect[] {
+  return yEdges.slice(0, -1).flatMap((top, row) => xEdges.slice(0, -1).map((left, column) => {
+    const cellWidth = xEdges[column + 1] - left, cellHeight = yEdges[row + 1] - top;
+    return { x: (left + cellWidth * gutter) / width, y: (top + cellHeight * gutter) / height,
+      width: cellWidth * (1 - 2 * gutter) / width, height: cellHeight * (1 - 2 * gutter) / height };
+  }));
+}

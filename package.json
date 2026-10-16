@@ -3,15 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.18.0" },
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:browser": "node scripts/browser-check.mjs && node scripts/message-check.mjs && node scripts/examples-framing-check.mjs"
+    "test:browser": "node scripts/browser-check.mjs && node scripts/message-check.mjs && node scripts/examples-framing-check.mjs && node scripts/themes-check.mjs && node scripts/pickers-check.mjs && node scripts/birthday-artwork-check.mjs",
+    "check:content": "node --experimental-strip-types scripts/check-content.mjs",
+    "folders:occasions": "node --experimental-strip-types scripts/create-occasion-folders.mjs",
+    "predev": "npm run check:content",
+    "prebuild": "npm run check:content"
   },
-  "dependencies": { "react": "^19.2.0", "react-dom": "^19.2.0" },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
   "devDependencies": {
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

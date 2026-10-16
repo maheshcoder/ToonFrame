@@ -35,7 +35,7 @@ export function StoryPage({ script, onScript, mode, onMode, options, onOptions, 
     <MessageSettings options={options} onChange={onOptions} avatar={cast[0]} />
     <div className="writing-layout">
       <section className="writing-card" aria-labelledby="story-heading">
-        <div className={'script-character-preview' + (dialogue ? ' two-preview' : '')}><div className="script-cast">{cast.slice(0, dialogue ? 2 : 1).map((avatar, index) => <CharacterSprite key={index} avatar={avatar} mood={index ? 'curious' : previewMood} />)}</div>
+        <div className={'script-character-preview' + (dialogue ? ' two-preview' : '')}><div className="script-cast">{cast.slice(0, dialogue ? 2 : 1).map((avatar, index) => <CharacterSprite occasion={options.occasion} key={index} avatar={avatar} mood={index ? 'curious' : previewMood} />)}</div>
           <div className="mini-speech">{occasion.emoji} {occasion.label}<br /><strong>A message only you could send.</strong><span>✨</span></div></div>
         <div className="writing-card-body"><div className="section-line"><h2 id="story-heading">What do you want to tell them?</h2><span>Your words. We add the feeling.</span></div>
           <p className="input-guidance" id="message-guidance">Just type what you want to say. We’ll add the expressions and emoji.</p>
@@ -59,7 +59,7 @@ export function StoryPage({ script, onScript, mode, onMode, options, onOptions, 
               <button key={item.value} type="button" aria-pressed={mode === item.value} onClick={() => onMode(item.value)}><span className="radio-dot" /><span><strong>{item.label}</strong><small>{item.detail}</small></span></button>)}
           </div>
           <div className="cast-settings"><h3>Choose your cast</h3>{cast.slice(0, dialogue ? 2 : 1).map((avatar, index) => <div className="cast-row" key={index}>
-            <CharacterSprite avatar={avatar} mood="neutral" decorative /><div><label htmlFor={'cast-' + index}>{result.story?.speakers[index] ?? (index ? 'Speaker 2' : 'Speaker 1')}</label>
+            <CharacterSprite occasion={options.occasion} avatar={avatar} mood="neutral" decorative /><div><label htmlFor={'cast-' + index}>{result.story?.speakers[index] ?? (index ? 'Speaker 2' : 'Speaker 1')}</label>
               <select id={'cast-' + index} value={castIds[index]} onChange={(event) => onCast(index, event.target.value)}>
                 {library.map((asset) => <option value={asset.id} key={asset.id}>{asset.name} {asset.kind === 'upload' ? '(uploaded)' : asset.id === 'male' ? '(male)' : '(female)'}</option>)}
               </select></div></div>)}

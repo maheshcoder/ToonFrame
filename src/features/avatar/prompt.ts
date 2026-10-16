@@ -10,7 +10,7 @@ export function characterPrompt(layout: SheetLayout): string {
   return `Use my attached portrait as the character identity reference, and the attached cartoon sheet as the drawing-style reference.
 Create one expression sprite sheet of the SAME person in a cute, polished chibi cartoon style: expressive eyes, clean outlines, soft colors, head-and-upper-torso framing. Preserve my hairstyle, skin tone, outfit, accessories, and recognizable face consistently.
 
-OUTPUT: one PNG image, ${width} × ${height} pixels (2:3 portrait aspect ratio). Arrange exactly ${columns} equal columns × ${rows} equal rows = ${layout} expressions. Each character must be centered at the same scale inside its own equal-sized cell. Leave a little empty space around every character; no hair or hands may cross cell boundaries. Use a plain white background, no borders or drawn gridlines, no text, no labels, no watermark, and no extra people.
+OUTPUT: one PNG image, ${width} × ${height} pixels (2:3 portrait aspect ratio). Arrange exactly ${columns} equal columns × ${rows} equal rows = ${layout} expressions. Keep each cell at least 256 × 256 pixels. Never squeeze in extra rows or columns; use another sheet for a larger pack. Every cell must contain a different character expression, with no copied or repeated poses. Each character must be centered at the same scale inside its own equal-sized cell. Leave a little empty space around every character; no hair or hands may cross cell boundaries. Use a plain white background, no borders or drawn gridlines, no text, no labels, no watermark, and no extra people.
 
 EXACT EXPRESSION ORDER, left to right, top to bottom:
 ${rowInstructions}
