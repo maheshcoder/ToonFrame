@@ -24,7 +24,7 @@ try {
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('response', (response) => { if (response.status() >= 400) missing.push(response.url()); });
   await page.goto(base + '/#/avatar');
-  await page.getByRole('button', { name: 'Choose Meera', exact: true }).click();
+  await page.getByRole('button', { name: 'Choose Lavanya', exact: true }).click();
   await page.getByRole('button', { name: 'A face for every feeling', exact: false }).click();
   const joyful = page.locator('.expression-tile [data-expression="joyful"] .sprite-frame');
   const viewBox = (await joyful.getAttribute('viewBox')).split(' ').map(Number);

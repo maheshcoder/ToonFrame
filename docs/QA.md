@@ -29,7 +29,7 @@ Verified 16 October 2026 on Windows with Node 24.17.0 and installed Chrome.
 - All 32 occasion cards are available in one horizontal row, with no occasion dropdown. Selection preserves the draft and updates the matching theme.
 - Real Chrome touch events verify swiping and tapping. Trackpad scrolling, previous/next buttons, arrow keys, Home/End, Enter, and visible focus work.
 - Occasion cards and expression panels fit 1440/768/375/320px without horizontal page overflow.
-- Scene expressions use a scrollable grid of 60 unique built-in character poses, emoji, and labels, with search and category filters. No scene-expression dropdown remains.
+- Scene expressions use a scrollable grid of 72 unique built-in character poses, emoji, and labels, with search and category filters. No scene-expression dropdown remains.
 - The picker uses the correct speaker's male, female, or uploaded character, pauses the timeline, and applies the chosen expression/emoji to that scene.
 - Keyboard grid arrows, Tab boundaries, Escape, Close, focus return, empty-search feedback, and restored body scrolling are covered.
 - Desktop centered dialogs and phone bottom sheets were visually reviewed.

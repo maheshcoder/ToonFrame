@@ -17,7 +17,7 @@ Keep the warm, soft-green visual language and the reference-inspired cartoon mal
 ## Implemented
 
 ### 1. Choose a character
-- Male Arjun and female Meera, each with 48 generic expressions and a separate 12-pose birthday art pack.
+- Male Mahesh and female Lavanya, each with 48 generic expressions plus separate 12-pose birthday and Diwali art packs.
 - Mood sampler and full expression gallery.
 - Copyable AI prompt and downloadable style references for a custom character.
 - Precise 12/24/48-expression sheet layouts and pose order; 48 is the default, with a 6 × 8 grid and 1536 × 2304 target.
@@ -36,7 +36,7 @@ Keep the warm, soft-green visual language and the reference-inspired cartoon mal
 ### 3. Preview and send
 - Expressions, movement, readable text bubbles, and emoji. Measured source rectangles handle uneven sprite spacing, and shared contained framing keeps complete poses visible; caption measurements reserve enough stage space.
 - 32 occasion-specific layered backgrounds: floating confetti/hearts/petals, party light beams, sunshine, stars, lanterns, snow, and Holi color. Interactive character/greeting cards support taps, keyboard effects, pointer depth, and finite play/pause demos. Ambient scenery follows the message timeline and is included in video; tap/pointer effects are preview-only. Reduced motion freezes all background animation.
-- Play/pause/resume/stop/replay, seek, speed, and scene navigation. Scene expressions use a searchable emoji-style keyboard with actual character thumbnails and feeling names, All/Personal/Classic/Occasions filters, all 32 occasion categories, and 60 unique choices per built-in. Categories without dedicated sheets show related existing character poses; Birthday has its own 12-pose pack. Uploaded keyboards list only their actual frames. The picker pauses playback, uses the correct male/female/uploaded speaker, supports keyboard/Escape/focus return, and becomes a bottom sheet on phones.
+- Play/pause/resume/stop/replay, seek, speed, and scene navigation. Scene expressions use a searchable emoji-style keyboard with actual character thumbnails and feeling names, All/Personal/Classic/Occasions filters, all 32 occasion categories, and 72 unique choices per built-in. Categories without dedicated sheets show related existing character poses; Birthday and Diwali each have their own 12-pose pack. Uploaded keyboards list only their actual frames. The picker pauses playback, uses the correct male/female/uploaded speaker, supports keyboard/Escape/focus return, and becomes a bottom sheet on phones.
 - Reduced-motion behavior and background-tab pause.
 - Real browser-local video recording, including default and uploaded characters.
 - Portrait 720 × 900, up to 24 fps, silent, maximum 60 seconds.

@@ -14,11 +14,12 @@ import { pngPixels } from '../scripts/lib/pngPixels.mjs';
 test('picker lists physical poses once, including distinct birthday artwork rather than repeated aliases', () => {
   for (const avatar of BUILTINS) {
     const choices = expressionChoices(avatar);
-    assert.equal(choices.length,60);
-    assert.equal(new Set(choices.map((choice) => choice.id)).size,60);
+    assert.equal(choices.length,72);
+    assert.equal(new Set(choices.map((choice) => choice.id)).size,72);
     assert.equal(choices.filter((choice) => choice.group === 'personal').length,24);
     assert.equal(choices.filter((choice) => choice.group === 'classic').length,24);
     assert.equal(choices.filter((choice) => choice.occasion === 'birthday').length,12);
+    assert.equal(choices.filter((choice) => choice.occasion === 'diwali').length,12);
     const wish = choices.find((choice) => choice.label === 'Make a wish')!;
     const frame = avatarFrame(avatar,wish.mood,'love',wish.artwork);
     assert.ok(frame.url.includes('/birthday/'));
@@ -111,7 +112,7 @@ test('every occasion has relevant real poses without repeating any physical fram
       const choices = expressionsForOccasion(avatar,occasion.id);
       assert.ok(choices.length > 0,occasion.id);
       assert.equal(new Set(choices.map((choice) => choice.id)).size,choices.length);
-      if (avatar.kind === 'builtin' && occasion.id === 'birthday') assert.equal(choices.length,12);
+      if (avatar.kind === 'builtin' && (occasion.id === 'birthday' || occasion.id === 'diwali')) assert.equal(choices.length,12);
     }
   }
 });

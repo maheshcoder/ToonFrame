@@ -74,7 +74,7 @@ try {
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Expressions for scene 2', exact: true });
   await dialog.waitFor();
-  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 12);
+  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 24);
   assert.equal(await dialog.locator('select').count(), 0);
   assert.ok(await dialog.locator('.expression-option').evaluateAll((buttons) => buttons.every((button) => button.querySelector('[data-avatar="female"]') && button.querySelector('.expression-option-emoji').textContent.trim())));
   const time = await page.locator('#timeline').inputValue();
@@ -85,11 +85,16 @@ try {
   assert.equal(await dialog.locator('.expression-option').count(), 24);
   await dialog.getByRole('button', { name: 'Occasions', exact: true }).click();
   assert.equal(await dialog.locator('[data-expression-occasion]').count(), OCCASIONS.length);
-  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 12);
+  assert.equal(await dialog.locator('.expression-option').count(), MOODS.length + 24);
   for (const occasion of OCCASIONS) {
     await dialog.locator('[data-expression-occasion="' + occasion.id + '"]').click();
     assert.equal(await dialog.locator('.expression-option').count(), expressionsForOccasion(BUILTINS[1],occasion.id).length);
-    if (occasion.id !== 'birthday') assert.ok(await dialog.getByText('Related poses from', { exact: false }).isVisible());
+    if (occasion.id === 'diwali') {
+      assert.equal(await dialog.locator('.expression-option[data-source="occasion"]').count(), 12);
+      assert.ok(await dialog.getByText('Dedicated artwork for this occasion.', { exact: true }).isVisible());
+      assert.ok(await dialog.getByRole('button', { name: 'Diya greeting', exact: true }).isVisible());
+    }
+    if (occasion.id !== 'birthday' && occasion.id !== 'diwali') assert.ok(await dialog.getByText('Related poses from', { exact: false }).isVisible());
   }
   await dialog.getByRole('button', { name: 'All', exact: true }).click();
   const physicalPoses = await dialog.locator('.expression-option').evaluateAll((tiles) => tiles.map((tile) => tile.dataset.artwork));

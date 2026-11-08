@@ -1,6 +1,6 @@
 # Adding expressions, avatar artwork, occasions, and backgrounds
 
-The current app has **48 moods**, **32 occasions**, and **32 background themes**, with 60 unique images per built-in character (48 regular + 12 birthday). Content lives in registries; components and video rendering read those registries.
+The current app has **48 moods**, **32 occasions**, and **32 background themes**, with 72 unique images per built-in character (48 regular + 12 birthday + 12 Diwali). Content lives in registries; components and video rendering read those registries.
 
 ## Occasion asset folders
 

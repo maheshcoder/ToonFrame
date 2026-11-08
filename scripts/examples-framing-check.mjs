@@ -47,7 +47,7 @@ try {
   pass('Occasion/feeling examples follow selections; the main example preserves two-character mode; banners fit at every size');
 
   await page.getByRole('button', { name: 'Your character', exact: true }).click();
-  for (const avatar of ['Arjun', 'Meera']) {
+  for (const avatar of ['Mahesh', 'Lavanya']) {
     await page.getByRole('button', { name: 'Choose ' + avatar, exact: true }).click();
     const gallery = page.getByRole('button', { name: 'A face for every feeling', exact: false });
     if (await gallery.getAttribute('aria-expanded') !== 'true') await gallery.click();
@@ -61,7 +61,7 @@ try {
     }
     await page.locator('.expression-grid').screenshot({ path: 'artifacts/' + avatar.toLowerCase() + '-all-poses-mobile.png' });
   }
-  pass('All 96 built-in poses fit their SVG slots and gallery cells at 320/375/768/1440px');
+  pass('All 120 built-in poses fit their SVG slots and gallery cells at 320/375/768/1440px');
 
   // Rasterize one actual frame and check its transparent letterbox. Neighboring
   // atlas cells used to paint into this margin when only the viewport was clipped.
