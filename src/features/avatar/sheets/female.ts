@@ -2,6 +2,7 @@ import type { AvatarSheet } from './definition.ts';
 import { atlasFrames } from '../framing.ts';
 import { ORIGINAL_ORDER, EXTRA_ORDER, EXTRA_2_ORDER } from './orders.ts';
 import { BIRTHDAY_ORDER, BIRTHDAY_ALIASES, BIRTHDAY_POSES } from './birthday.ts';
+import { DIWALI_ORDER, DIWALI_ALIASES, DIWALI_POSES } from './diwali.ts';
 // Measured image boundaries preserve complete hair, flowers, hands and outfits.
 export const FEMALE_SHEETS = [
   { src: '/avatars/female-expressions.png', columns: 3, rows: 4, order: ORIGINAL_ORDER.female,
@@ -12,5 +13,8 @@ export const FEMALE_SHEETS = [
     frames: atlasFrames(1024, 1536, [1, 276, 519, 773, 1023], [1, 254, 496, 745, 998, 1251, 1533], .006) },
   { src: '/avatars/female/birthday/Female Birthday-1.png', columns: 3, rows: 4, aspectRatio: 2 / 3,
     occasion: 'birthday', order: BIRTHDAY_ORDER, poses: BIRTHDAY_POSES, aliases: BIRTHDAY_ALIASES,
+    frames: atlasFrames(1024, 1536, [1, 342, 682, 1023], [1, 369, 748, 1110, 1534], .008) },
+  { src: '/avatars/female/diwali/Chibi Diwali Celebration Sticker Sheet (1).png', columns: 3, rows: 4, aspectRatio: 2 / 3,
+    occasion: 'diwali', order: DIWALI_ORDER, poses: DIWALI_POSES, aliases: DIWALI_ALIASES,
     frames: atlasFrames(1024, 1536, [1, 342, 682, 1023], [1, 369, 748, 1110, 1534], .008) },
 ] as const satisfies readonly AvatarSheet[];

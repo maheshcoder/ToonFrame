@@ -1,6 +1,6 @@
 # Character asset provenance and generation prompts
 
-Eight PNG atlases in public/avatars are packaged project assets, including two user-supplied birthday sheets in the male/female birthday folders. The original four were created using the built-in image-generation tool. The user subsequently supplied male-extra-2.png and female-extra-2.png directly in the avatar folder; their generation process is not recorded here. No generation service or API key is added to the app.
+Ten PNG atlases in public/avatars are packaged project assets, including user-supplied birthday and Diwali sheets in their male/female occasion folders. The original four were created using the built-in image-generation tool. The user subsequently supplied male-extra-2.png, female-extra-2.png, and the occasion sheets directly in the avatar folders; their generation process is not recorded here. No generation service or API key is added to the app.
 
 The user supplied male and female cartoon reference images in the conversation. Their original Downloads paths were readable at the start, but unavailable when copied. The base atlases were recreated from the visible references; they are **reference-derived recreations, not byte-for-byte copies of the originals**. Additional sheets supply the other moods. Identity, outfits, flower/accessories, and drawing style were retained as visual constraints.
 
@@ -16,6 +16,8 @@ The six generic atlases are 1024 × 1536. The original four use 3 columns × 4 r
 | public/avatars/female-extra-2.png | Twenty-four user-added personal-message poses, 4 × 6 |
 | public/avatars/male/birthday/Male birthday expression-1.png | Twelve user-supplied birthday poses, 3 × 4, 1086 × 1448 |
 | public/avatars/female/birthday/Female Birthday-1.png | Twelve user-supplied birthday poses, 3 × 4, 1024 × 1536 |
+| public/avatars/male/diwali/Chibi Diwali Celebration Sticker Sheet.png | Twelve user-supplied Diwali poses, 3 × 4, 1086 × 1448 |
+| public/avatars/female/diwali/Chibi Diwali Celebration Sticker Sheet (1).png | Twelve user-supplied Diwali poses, 3 × 4, 1024 × 1536 |
 
 Exact frame orders live in src/features/avatar/sheets/orders.ts and the male/female manifests. Expression metadata lives in src/features/avatar/catalog/. The user-facing custom generation prompt lives in src/features/avatar/prompt.ts and has a separate, consistent 12/24/48-frame order.
 

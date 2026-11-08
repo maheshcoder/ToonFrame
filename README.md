@@ -4,7 +4,7 @@ Turn personal messages into short, silent avatar videos for friends, partners, a
 
 The app keeps its warm, soft-green design and three separate screens:
 
-1. **Your character** — choose Arjun or Meera, or upload your own expression sheet using the copyable AI prompt and style reference.
+1. **Your character** — choose Mahesh or Lavanya, or upload your own expression sheet using the copyable AI prompt and style reference.
 2. **Your message** — choose an occasion and feeling, type/paste your words, and optionally cast a second character.
 3. **Your animation** — preview and adjust the expressions, then create a video to download or share.
 
@@ -60,7 +60,7 @@ Every occasion has examples for all eight selected feelings, plus automatic expr
 
 Changing an occasion or feeling **keeps your words**. Only an explicit example button replaces the text.
 
-Eight prominent emotion choices show the selected character's actual face: happy, loving, shy, surprised, mock angry, sad, excited, and playful. “Follow my message” uses local text rules to vary the expression from moment to moment. Both defaults have **48 regular expression frames plus 12 dedicated birthday poses: 60 unique images each** in the scene keyboard. The 24 new personal-message poses include playful, cheeky, kisses, birthday gifts, mock anger, apologies, and hopeful reconciliation. They appear first in the built-in gallery.
+Eight prominent emotion choices show the selected character's actual face: happy, loving, shy, surprised, mock angry, sad, excited, and playful. “Follow my message” uses local text rules to vary the expression from moment to moment. Both defaults have **48 regular expression frames plus 12 dedicated birthday poses and 12 dedicated Diwali poses: 72 unique images each** in the scene keyboard. The 24 new personal-message poses include playful, cheeky, kisses, birthday gifts, mock anger, apologies, and hopeful reconciliation. They appear first in the built-in gallery.
 
 Emotion priority:
 
@@ -75,7 +75,7 @@ New lines and sentences create readable moments. A “but…” reversal can cre
 The 5,000-character limit and 60-scene limit allow longer previews; **video files are limited to 60 seconds at the selected speed**. Short personal notes work best.
 
 
-Birthday messages also use the two supplied **12-pose birthday sheets**, including waving, confetti celebrations, gifts, blowing candles, gratitude, and kisses. Birthday automatically uses these in the writing preview, animation, and local video. In the scene keyboard they are listed once as separate choices under Occasions → Birthday, including **Make a wish**. They can also be selected manually with any background. Close feelings can resolve to the same automatic pose, but those aliases never create repeated keyboard tiles. Sad/angry feelings keep their regular drawings. Uploaded characters keep their own sheets.
+Birthday messages use the two supplied **12-pose birthday sheets**, including waving, confetti celebrations, gifts, blowing candles, gratitude, and kisses. Diwali messages use the two supplied **12-pose Diwali sheets**, including diyas, sparklers, namaste, sweets, lanterns, and fireworks. Each occasion automatically uses its dedicated artwork in the writing preview, animation, and local video. In the scene keyboard they are listed once under Occasions → Birthday or Occasions → Diwali. They can also be selected manually with any background. Close feelings can resolve to the same automatic pose, but aliases never create repeated keyboard tiles. Sad/angry feelings keep their regular drawings. Uploaded characters keep their own sheets.
 
 ## One person or two
 

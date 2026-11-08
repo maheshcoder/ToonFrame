@@ -9,8 +9,8 @@ export type AvatarAsset =
   | { kind: 'builtin'; id: 'male' | 'female'; name: string }
   | { kind: 'upload'; id: string; name: string; url: string; layout: SheetLayout };
 export const BUILTINS: AvatarAsset[] = [
-  { kind: 'builtin', id: 'male', name: 'Arjun' },
-  { kind: 'builtin', id: 'female', name: 'Meera' },
+  { kind: 'builtin', id: 'male', name: 'Mahesh' },
+  { kind: 'builtin', id: 'female', name: 'Lavanya' },
 ];
 export function avatarFrame(avatar: AvatarAsset, mood: Mood, occasion?: string, artwork?: AvatarArtwork) {
   if (avatar.kind === 'upload') {
